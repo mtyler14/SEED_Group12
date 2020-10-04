@@ -199,11 +199,3 @@ def marker_angle_distance(image=None):
 
 if __name__ == "__main__":
     print("This program does nothing by itself")
-    calibration()
-    for x in range(5):
-        input("Press enter to take a photo")
-        cv.destroyAllWindows()
-        img = capture_image(display_image=True)
-
-        _, ids = detect_markers(img)
-        print(ids)
