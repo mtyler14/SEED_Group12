@@ -2,6 +2,29 @@ import cv2 as cv
 import numpy as np
 import picamera
 import picamera.array
+import time
+
+
+def calibration():
+    with picamera.PiCamera() as camera:
+        time.sleep(1)
+        camera.awb_mode = 'auto'
+
+        red, blue = [], []
+        samples, sample_time = 10, .5
+        for i in range(samples):
+            r, b = camera.awb_gains
+            red.append(r)
+            blue.append(b)
+            time.sleep(sample_time)
+
+        avg_red = sum(red) / samples
+        avg_blue = sum(blue) / samples
+
+        camera.awb_mode = 'off'
+        camera.awb_gains = (avg_red, avg_blue)
+        print("Calibrated")
+        return None
 
 
 # Captures an image from the camera
@@ -173,5 +196,14 @@ def marker_angle_distance(image=None):
     aruco_dimensions = 40  # mm
     tag_distance(corners, focal_pixel, aruco_dimensions)
 
+
 if __name__ == "__main__":
     print("This program does nothing by itself")
+    calibration()
+    for x in range(5):
+        input("Press enter to take a photo")
+        cv.destroyAllWindows()
+        img = capture_image(display_image=True)
+
+        _, ids = detect_markers(img)
+        print(ids)
