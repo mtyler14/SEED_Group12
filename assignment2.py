@@ -64,19 +64,20 @@ if __name__ == '__main__':
             image = ar.capture_image()
             angle_x, angle_y = ar.marker_angle(image)
 
+            # Get the quadrant that the tag is in
             if angle_x > 0 and angle_y > 0:
-                tag = 1
+                quadrant = 1
             elif angle_x < 0 and angle_y > 0:
-                tag = 2
+                quadrant = 2
             elif angle_x < 0 and angle_y < 0:
-                tag = 3
+                quadrant = 3
             elif angle_x > 0 and angle_y < 0:
-                tag = 4
+                quadrant = 4
             else:
-                tag = 1
+                quadrant = 1
 
-            display_tag(tag)
-            write_number(tag)
+            display_tag(quadrant)
+            write_number(quadrant)
 
             returned = read_number()
             display_position(returned)

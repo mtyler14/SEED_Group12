@@ -153,8 +153,8 @@ def marker_angle(image=None):
         deg_y = round(np.rad2deg(theta_y), 2)
         deg_x = round(np.rad2deg(theta_x), 2)
 
-        print(f'The horizontal angle from the camera is {deg_x} degrees')
-        print(f'The vertical angle from the camera is {deg_y} degrees')
+        # print(f'The horizontal angle from the camera is {deg_x} degrees')
+        # print(f'The vertical angle from the camera is {deg_y} degrees')
 
         return deg_x, deg_y
 
@@ -176,7 +176,7 @@ def marker_angle(image=None):
     # Get the Aruco markers in the image. If there aren't any then return nothing
     corners, ids = detect_markers(image, verbose=False)
     if not corners:
-        return None
+        return 0, 0
     corners = corners[0][0]
 
     # get the angles and distance
