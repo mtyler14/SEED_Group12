@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #     input("The calibration will take 5 seconds")
     #     print("Calibrating")
     #     ar.calibration()
-
+    old_quadrant = 1
     while True:
         try:
             image = ar.capture_image()
@@ -74,7 +74,10 @@ if __name__ == '__main__':
             elif angle_x > 0 and angle_y < 0:
                 quadrant = 4
             else:
-                quadrant = 1
+                # If no tag is found then the last quadrant used will be reused
+                quadrant = old_quadrant
+
+            old_quadrant = quadrant
 
             display_tag(quadrant)
             write_number(quadrant)
