@@ -51,6 +51,14 @@ if __name__ == '__main__':
     lcd.message = f"set point:"
     lcd.message = f"\nPosition:"
 
+    # Code to calibrate the camera
+    # selection = input("Would you like to run calibration? y/n")
+    # if selection == 'y':
+    #     print('Hold a piece of paper in front of the camera and press enter to calibrate.')
+    #     input("The calibration will take 5 seconds")
+    #     print("Calibrating")
+    #     ar.calibration()
+
     while True:
         try:
             image = ar.capture_image()
