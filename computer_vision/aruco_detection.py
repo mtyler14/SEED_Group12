@@ -177,12 +177,13 @@ def marker_angle(image=None):
     corners, ids = detect_markers(image, verbose=False)
     if not corners:
         return 0, 0
-    corners = corners[0][0]
+
+    # print(corners)
+    corners = corners[0][0] #This line should be correct
+    # corners = corners[0]
 
     # get the angles and distance
     angle_x, angle_y = angle(corners, focal_pixel)
-    # The side length of the aruco tag being detected. Outer dimension with a one block border
-
 
     return angle_x, angle_y
 
