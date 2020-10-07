@@ -56,7 +56,7 @@ if __name__ == '__main__':
             image = ar.capture_image()
             angle_x, angle_y = ar.marker_angle(image)
 
-            if angle_x < 0 and angle_y > 0:
+            if angle_x > 0 and angle_y > 0:
                 tag = 1
             elif angle_x < 0 and angle_y > 0:
                 tag = 2
@@ -64,6 +64,8 @@ if __name__ == '__main__':
                 tag = 3
             elif angle_x > 0 and angle_y < 0:
                 tag = 4
+            else:
+                tag = 1
 
             display_tag(tag)
             write_number(tag)
