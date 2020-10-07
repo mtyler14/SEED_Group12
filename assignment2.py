@@ -48,24 +48,25 @@ arduino_address = 0x04
 
 
 if __name__ == '__main__':
-    old_tag = 1
-    valid_tags = [1, 2, 3, 4]
     lcd.message = f"set point:"
     lcd.message = f"\nPosition:"
 
     while True:
         try:
             image = ar.capture_image()
-            ids = None
-            _, ids = ar.detect_markers(image, verbose=False)
+            angle_x, angle_y = ar.marker_angle(image)
 
-            if ids is not None:
-                tag = ids[0][0]
-                print(f'The tag is {tag}')
-                if tag in valid_tags:
-                    display_tag(tag)
-                    write_number(tag)
-                    old_tag = tag
+            if angle_x < 0 and angle_y > 0:
+                tag = 1
+            elif angle_x < 0 and angle_y > 0:
+                tag = 2
+            elif angle_x < 0 and angle_y < 0:
+                tag = 3
+            elif angle_x > 0 and angle_y < 0:
+                tag = 4
+
+            display_tag(tag)
+            write_number(tag)
 
             returned = read_number()
             display_position(returned)

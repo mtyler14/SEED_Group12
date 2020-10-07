@@ -128,7 +128,7 @@ def detect_markers(image=None, verbose=True):
 
 
 # Find marker's angle and distance from camera
-def marker_angle_distance(image=None):
+def marker_angle(image=None):
     # Get the angle measurements
     def angle(c, f):
         # If field of view is known the following formula can be used too
@@ -156,12 +156,7 @@ def marker_angle_distance(image=None):
         print(f'The horizontal angle from the camera is {deg_x} degrees')
         print(f'The vertical angle from the camera is {deg_y} degrees')
 
-    # Find the distance from the camera. Change this to work based on side length
-    def tag_distance(c, f, aruco_edge_size):
-        print(c)
-        pixel_height = (c[2][1] - c[1][1]) + (c[3][1] - c[0][1]) / 2
-        tag_dist = 2 * aruco_edge_size * f / pixel_height
-        print(f'The tag is {tag_dist} mm away from the camera')
+        return deg_x, deg_y
 
     # Capture and image if one was not supplied
     if image is None:
@@ -184,17 +179,12 @@ def marker_angle_distance(image=None):
         return None
     corners = corners[0][0]
 
-    for i in range(4):
-        cv.circle(image, (corners[i][0], corners[i][1]), (i + 1) * 3, (0, 255, 0))
-
-    cv.imshow("b", image)
-    cv.waitKey(0)
-
     # get the angles and distance
-    angle(corners, focal_pixel)
+    angle_x, angle_y = angle(corners, focal_pixel)
     # The side length of the aruco tag being detected. Outer dimension with a one block border
-    aruco_dimensions = 40  # mm
-    tag_distance(corners, focal_pixel, aruco_dimensions)
+
+
+    return angle_x, angle_y
 
 
 if __name__ == "__main__":
