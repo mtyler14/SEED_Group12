@@ -1,3 +1,11 @@
+/*
+This code controls motor and spinning wheel. It takes inputs from an I2C bus and an encoder.
+The programs outputs a PWM signal to a motor controller and sends the location of the 
+wheel over I2C to a raspberry pi.
+
+To use this code, connect the GND, SCL, and SDA lines to the raspberry pi. Plug in the motor
+drive to the ardunino and connect the encoder to the pins specified in the code below. 
+*/
 
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
@@ -5,20 +13,25 @@
 
 #define SLAVE_ADDRESS 0x04
 
+// Encoder settings
 const int CPR = 3200;
 const int enc1A = 2;
 const int enc1B = 5;
-const double pi = 3.14159;
-Encoder enc1(enc1A, enc1B);
-int motorDirection = 7;
-int motorVoltage = 9;
-int motorEnable = 4;
+
 long enc1Pos = -999;
 int encValStart = 0;
 int encValEnd = 0;
 int encVel = 0;
-int delayVal = 10;
 
+const double pi = 3.14159;
+Encoder enc1(enc1A, enc1B);
+// Motor settings
+int motorDirection = 7;
+int motorVoltage = 9;
+int motorEnable = 4;
+
+// Timing variables
+int delayVal = 10;
 int voltageValue = 128;
 long startTime = 0;
 long endTime = 0;
@@ -26,6 +39,7 @@ long currentTime = 0;
 long timeSinceCall = 0;
 void reportData();
 
+// Angular measurement variables
 double angPos = 0;
 double angPosEnd = 0;
 char angPosString[5];
@@ -34,10 +48,12 @@ double angVel = 0;
 double angChange = 0;
 double newVelocity = 0;
 
+// PID controller gains
 double Kp = 200; // 3082.721; // V/theta
 double Ki = 0; // V*s/theta
 double Kd = 8; // V/thetas*s
 
+// PID controller variables
 double e = 0;
 double u = 0;
 double derivate = 0;
@@ -68,7 +84,6 @@ void setup() {
 
 void loop() {
 
-  // put your main code here, to run repeatedly:
 
   currentTime = millis(); //collect time of program in milliseconds
   reportData();
@@ -83,6 +98,7 @@ void loop() {
   u = e*Kp + Ki * I + Kd * derivate; // PID controller
   //Serial.print(u);
   //Serial.print('\t');
+  // Change the directino of the motor based on motor correction
   if (u < 0) {
     digitalWrite(motorDirection, HIGH);
   } else {
@@ -90,9 +106,13 @@ void loop() {
   }
       Serial.print(I);
     Serial.print("\t");
+    // Get the absolute values of the correction
   u = abs(u);
+  // constrain the correction to valid PWM values
   u = constrain(u, 0, 255);
   analogWrite(motorVoltage, u); // set motor voltage to u
+
+  // Delay a certain amount to keep a constant loop speed
   delayValue = loopSpeed - ((millis() - currentTime) % 50);
   delay(delayValue); // delay accordingly for 50ms
 
@@ -133,17 +153,16 @@ void reportData() {
   // Serial.print("\tSet point: ");
   //Serial.print(r);
 
-  //  if(endTime - startTime > delayVal){
-  //    Serial.println("main took too long!");
-  //  }
+
 }
 
-// callback for received data
+// callback for received data. Receive data from the raspberry pi
 void receiveData(int byteCount) {
   while (Wire.available()) {
     tagNumber = Wire.read();
 //    Serial.print("\nI received data. ");
 //    Serial.print(tagNumber);
+// Set the desired setpoint based on the received tag/quadrant
     if (tagNumber == 1) {
       r = 0;
     } else if (tagNumber == 2) {
@@ -159,7 +178,7 @@ void receiveData(int byteCount) {
 
 // callback for sending data
 void sendData() {
-  // add 5 to the number that was sent over by the Pi
+    // Write data over the I2c bus
     dtostrf(angPos,2,2,angPosString);
     for(int i = 0; i < 5; i++) {
       if(i == 0 && angPosString[0] != '-') {
