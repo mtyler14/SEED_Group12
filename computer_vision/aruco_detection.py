@@ -1,10 +1,22 @@
+"""
+This code is used to detect the location of ArUco markers in images. It was written
+with the assumption that it is being run on a raspberry pi with a raspberry pi camera
+attached. The code does nothing by itself, but provides a set of useful functions that
+can be used from other programs.
+
+To use this code import it into another python program. Sample import code and funtion
+usage code is shown below
+import arudo_detection
+image = arudo_detection.capture_image()
+"""
+
 import cv2 as cv
 import numpy as np
 import picamera
 import picamera.array
 import time
 
-
+# calibrates the white balance of the camera
 def calibration():
     with picamera.PiCamera() as camera:
         time.sleep(1)
@@ -52,25 +64,6 @@ def capture_image(need_input=False, display_image=False):
     return img
 
 
-# Resize an image
-def resize(image=None, x_scale=1.0, y_scale=1.0, display_image=False):
-    # Capture an image if one is not provided
-    if image is None:
-        image = capture_image()
-    cv.imwrite("Normal size.jpg", image)
-    # Resize the image
-    new_image = cv.resize(image, None, fx=x_scale, fy=y_scale, interpolation=cv.INTER_LINEAR)
-
-    # Display the image if it was requested in the function call
-    if display_image:
-        cv.imshow("Resized Image", new_image)
-        cv.waitKey(0)
-    else:
-        pass
-
-    return new_image
-
-
 # Converts a BRG image to grayscale
 def to_grayscale(image=None, display_image=False):
     # Captures an image if one was not provided
@@ -84,22 +77,6 @@ def to_grayscale(image=None, display_image=False):
         cv.imshow('Grayscale', grayscale)
         cv.waitKey(0)
     return grayscale
-
-
-# Create aruco markers from a list of marker ids
-def draw_markers(marker_list):
-    # Load the aruco dictionary
-    dictionary = cv.aruco.Dictionary_get(cv.aruco.DICT_6X6_250)
-
-    for marker in marker_list:
-        # create array to store marker in
-        out_marker = np.zeros((200, 200), dtype=np.uint8)
-
-        # Create the markers
-        out_marker = cv.aruco.drawMarker(dictionary, 1, 200, out_marker, 1)
-
-        # Write the markers out to a file
-        cv.imwrite(f"marker{marker}.jpg", out_marker)
 
 
 # Detect aruco markers in an image
