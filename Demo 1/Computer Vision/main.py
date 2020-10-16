@@ -97,65 +97,7 @@ def detect_markers(image=None, verbose=True):
     return marker_corners, marker_ids
 
 
-# Find marker's angle and distance from camera
-def marker_angle(image=None):
-    # Get the angle measurements
-    def angle(c, f):
-        # If field of view is known the following formula can be used too
-        # theta = arctan(px * tan(fov / 2) / (sensor_x / 2))
-
-        # [x, y] pairs for the marker corners
-        p1, p2, p3, p4 = c[0], c[1], c[2], c[3]
-        tag_center_x = int((p1[0] + p2[0] + p3[0] + p4[0]) / 4)
-        tag_center_y = int((p1[1] + p2[1] + p3[1] + p4[1]) / 4)
-
-        # Get the x and y difference from the center of the image
-        # Positive is higher in the image
-        y_coord = center_y - tag_center_y
-        # Positive is farther right in the image
-        x_coord = tag_center_x - center_x
-
-        # Find the angle based on the location and focal length
-        theta_y = np.arctan(y_coord / f)
-        theta_x = np.arctan(x_coord / f)
-
-        # Convert radians to degrees
-        deg_y = round(np.rad2deg(theta_y), 2)
-        deg_x = round(np.rad2deg(theta_x), 2)
-
-        # print(f'The horizontal angle from the camera is {deg_x} degrees')
-        # print(f'The vertical angle from the camera is {deg_y} degrees')
-
-        return deg_x, deg_y
-
-    # Capture and image if one was not supplied
-    if image is None:
-        image = capture_image()
-
-    # Image parameters
-    y, x, z = np.shape(image)
-    center_x = int(x / 2)
-    center_y = int(y / 2)
-
-    # Camera focal length and sensor size in mm. Camera v2.1 3.04 and 2.760 respectively
-    focal = 3.04  # mm
-    sensor_size = 2.760  # mm
-    pixels_per_mm = y / sensor_size  # Ratio for converting pixels to mm based on the pixel size and sensor size
-    focal_pixel = int(pixels_per_mm * focal)  # Focal length in terms of pixels
-
-    # Get the Aruco markers in the image. If there aren't any then return nothing
-    corners, ids = detect_markers(image, verbose=False)
-    if not corners:
-        return 0, 0
-
-    corners = corners[0][0] 
-
-    # get the angles and distance
-    angle_x, angle_y = angle(corners, focal_pixel)
-
-    return angle_x, angle_y
-
-
+# Find the angle between a marker and the camera
 def marker_angle_better(image):
     # Side length of the markers in centimeters
     marker_side_length = 4
