@@ -39,8 +39,6 @@ def write_number(value):
 def read_number():
     number = bus.read_i2c_block_data(arduino_address, 0, 5)
     value = chr(number[0]) + chr(number[1]) + chr(number[2]) + chr(number[3]) + chr(number[4])
-
-
     return value
 
 

@@ -6,7 +6,8 @@ import cv2 as cv
 import numpy as np
 import picamera
 import picamera.array
-import time
+import smbus2, time, board, bus.io
+import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
 
 # calibrates the white balance of the camera
 def calibration():
@@ -183,10 +184,54 @@ def marker_angle_better(image):
     angle = np.rad2deg(angle)
     angle = -angle  # For some reason to the left of the camera center is supposed to be positive
 
-    return angle
+    return round(angle, 2)
+
+
+# Displays the angle on the LCD
+def display_angle(angle):
+    lcd.cursor_position(8, 1)
+    lcd.message = f"{angle}     "
 
 
 if __name__ == "__main__":
-    print("This program does nothing by itself")
+    # create the I2C bus
+    bus = smbus2.SMBus(1)
+
+    # Initialize the LCD
+    lcd_columns = 16
+    lcd_rows = 2
+
+    i2c = busio.I2C(board.SCL, board.SDA)  # Initialise I2C bus.
+    # Initialise the LCD class
+    lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
+    lcd.color = [0, 100, 0]  # Set LCD color to green
+
+    lcd.message("Angle: ")
+
+        while True:
+            try:
+                old_angle = None
+                # Capture an image and get the x and y angles of the ArUco tag
+                image = capture_image()
+                angle_x = marker_angle_better(image)
+
+                if angle_x != old_angle:
+                    display_angle(angle)    
+                    old_angle = angle_x
+                else:
+                    pass            
+
+            # Catch keyboard interrupts to exit cleanly from the program
+            except KeyboardInterrupt:
+                sys.exit(0)
+
+            # If the I2c connection is lost then try to reconnect every half second
+            except OSError as err:
+                if err.errno == 121:
+                    # input("Press enter to reconnect to the I2C Bus")
+                    print("Reconnecting to the I2C bus")
+                    time.sleep(.5)
+                    bus = smbus2.SMBus(1)
+   
 
 
