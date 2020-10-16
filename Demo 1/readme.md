@@ -1,5 +1,5 @@
 # Demo 1
-This is the code to run out robot for demo 1
+This is the code to run out robot for demo 1.
 
 ## Usage
 
