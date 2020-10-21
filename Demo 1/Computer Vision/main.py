@@ -6,10 +6,18 @@ import cv2 as cv
 import numpy as np
 import picamera
 import picamera.array
-import smbus2, time, board, bus.io
+import smbus2, time, board, busio, sys
 import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
+import k_calibration as k_calib
 
-# calibrates the white balance of the camera
+# Get the camera instrinsic matrix
+# print("Getting camera intrinsic matrix")
+# mtx, dist = k_calib.calibrate()
+# print(mtx)
+# print(dist)
+# sys.exit()
+# print("Done calibrating")
+
 def calibration():
     with picamera.PiCamera() as camera:
         time.sleep(1)
@@ -38,7 +46,6 @@ def capture_image(need_input=False, display_image=False):
     if need_input:
         file_name = input("Enter a file name: ")
 
-    # Capture an image from the camera
     with picamera.PiCamera() as camera:
         with picamera.array.PiRGBArray(camera) as stream:
             camera.capture(stream, format='bgr')
@@ -103,21 +110,36 @@ def marker_angle_better(image):
     marker_side_length = 4
     half_length = marker_side_length / 2
 
+    y, x, z = image.shape
+
+    # Intrinsic camera matrix from camera calibration
+    mtx = np.array([[991.81071752, 0, 640.30560676],
+                    [  0, 989.20709434, 380.21277226], 
+                    [  0, 0, 1        ]])
+    dist = np.array([[ 0.14322605, -0.44745448,  0.00674916, -0.00762606,  0.42635002]])
+
+    # Undistort each frame based on the camera parameters
+    new_cam_matx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (x, y), 1, (x, y))
+    mapx, mapy = cv.initUndistortRectifyMap(mtx, dist, None, new_cam_matx, (x,y), 5)
+    dst = cv.remap(image, mapx, mapy, cv.INTER_LINEAR)
+
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+
     # Corners of the markers from the marker's coordinate system
     marker_corners = np.array([[-half_length,    -half_length,    0],     # top left
                                 [half_length,    -half_length,    0],     # top right
                                 [half_length,    half_length,     0],     # bottom right
                                 [-half_length,   half_length,     0]])    # bottom left
 
-    corners, ids = detect_markers(image)
+    corners, ids = detect_markers(dst, False)
     if not corners:
-        print("No markers found")
         return None
     # Get the first tag from the detected tags
     corners = np.asarray(corners[0][0]).astype(float)
 
     # Find the rotation and translation matrices for the tag
-    ret, r_vec, t_vec = cv.solvePnP(marker_corners, corners, k, None)
+    ret, r_vec, t_vec = cv.solvePnP(marker_corners, corners, mtx, None)
 
     x = t_vec[0][0]
     z = t_vec[2][0]
@@ -148,32 +170,57 @@ if __name__ == "__main__":
     lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
     lcd.color = [0, 100, 0]  # Set LCD color to green
 
-    lcd.message("Angle: ")
+    lcd.message = "Angle: "
 
-        while True:
-            try:
-                old_angle = None
-                # Capture an image and get the x and y angles of the ArUco tag
-                image = capture_image()
-                angle_x = marker_angle_better(image)
+    while True:
+        try:
+            old_angle = None
+            # Capture an image and get the x and y angles of the ArUco tag
+            image = capture_image()
+            # cv.imshow("image", image)
+            # cv.waitKey(0)
+            angle_x = marker_angle_better(image)
 
-                if angle_x != old_angle:
-                    display_angle(angle)    
-                    old_angle = angle_x
-                else:
-                    pass            
+            if angle_x != old_angle:
+                print(angle_x)
+                display_angle(angle_x)    
+                old_angle = angle_x
+            else:
+                pass            
 
-            # Catch keyboard interrupts to exit cleanly from the program
-            except KeyboardInterrupt:
-                sys.exit(0)
+        # Catch keyboard interrupts to exit cleanly from the program
+        except KeyboardInterrupt:
+            sys.exit(0)
 
-            # If the I2c connection is lost then try to reconnect every half second
-            except OSError as err:
-                if err.errno == 121:
-                    # input("Press enter to reconnect to the I2C Bus")
-                    print("Reconnecting to the I2C bus")
-                    time.sleep(.5)
-                    bus = smbus2.SMBus(1)
+        # If the I2c connection is lost then try to reconnect every half second
+        except OSError as err:
+            if err.errno == 121:
+                # input("Press enter to reconnect to the I2C Bus")
+                print("Reconnecting to the I2C bus")
+                time.sleep(.5)
+                bus = smbus2.SMBus(1)
+
+
    
+# Code for manual k calculation
+# focal = 3.04  # mm 3.04 to start
+# sensor_y = 2.760  # mm 2.760 to start
+# sensor_x = 3.68 # mm 3.68 to start
+# pixels_per_mm_y = y / sensor_y  # Ratio for converting pixels to mm based on the pixel size and sensor size
+# pixels_per_mm_x = x / sensor_x
+
+# focal_x = int(pixels_per_mm_x * focal)
+# focal_y = int(pixels_per_mm_y * focal)
+
+# center_x = int(x / 2)
+# center_y = int(y / 2)
+
+# # 5: 11.3
+# # 4: 14.03
+# # 3: 18.43
+# # 2: 26.56
+
+# # Intrinsic camera matrix
+# k = np.array([[focal_x, 0, center_x], [0, focal_y, center_y], [0, 0, 1]])
 
 
