@@ -52,7 +52,7 @@ int motor2pwm = 0;
 int delayVal = 10;
 int voltageValue = 128;
 long startTime = 0;
-long endTime = 0;
+long endTime = -1;
 long currentTime = 0;
 long timeSinceCall = 0;
 void reportData();
@@ -137,7 +137,7 @@ void setup() {
   digitalWrite(enc2Volt, HIGH);
   digitalWrite(motorEnable, HIGH);
   digitalWrite(motorDirection1, LOW);
-  digitalWrite(motorDirection2, HIGH); // forward movement
+  digitalWrite(motorDirection2,HIGH ); // forward movement
   // initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
 
@@ -149,19 +149,26 @@ void setup() {
 
 }
 
+int firstLoop = 0;
 void loop() {
 
+  if(firstLoop == 0){
+    delay(250);
+    firstLoop++;
+  }
   currentTime = millis(); //collect time of program in milliseconds
+  
 
-  //analogWrite(motorVoltage1, 75);
-  //analogWrite(motorVoltage2, 75);
+  analogWrite(motorVoltage1, 75);
+  analogWrite(motorVoltage2, 75);
  // double secTime = (double)currentTime / 1000;
   angularVelocity1 = (count - countBeforeDelay) * 2 * pi / ((double)(currentTime - endTime) * CPR / 1000);
   angularVelocity2 = (count2 - countBeforeDelay2) * 2 * pi / ((double)(currentTime - endTime) * CPR / 1000);
   
-  Serial.print(angularVelocity1); Serial.print("    ");  Serial.print(angularVelocity2); Serial.print("    "); Serial.print(u); Serial.print("    "); Serial.println(uTwo);
-
+  Serial.print(angularVelocity1); Serial.print("    ");  Serial.println(angularVelocity2); //Serial.print("    "); Serial.print(u); Serial.print("    "); Serial.println(uTwo);
+/*
   rhoDotExperimental = (radius / 12) * ((angularVelocity1 + angularVelocity2) / 2);
+  Serial.print("    "); Serial.print(rhoDotExperimental);
   //  phiDotExperimental = (radius / 12) * ((angularVelocity1 - angularVelocity2) / (distanceBetweenWheels / 12));
 
 
@@ -170,13 +177,15 @@ void loop() {
 
   //controller one
   e = rhoDot - rhoDotExperimental; // error
+  Serial.print("    "); Serial.print(e);
   //  e = .3;
   //e_past = .2;
   double temp = loopSpeed / 1000.0;
   derivate = (e - e_past) / temp ; // approximate the derivative
   e_past = e;
-  //  I = I + e * (loopSpeed / 1000); // summation of error to approximate integral
-  I += e; // summation of error to approximate integral
+  I = I + e * (loopSpeed / 1000); // summation of error to approximate integral
+  //I += e; // summation of error to approximate integral
+  Serial.print("    "); Serial.println(I);
   // I = I + (e*temp);
   if (I > 5) I = 1;
   if (I < -5) I = -1;
@@ -233,10 +242,10 @@ void loop() {
   //  uTwo = constrain(uTwo, 55, 255);
   //
   ////   Serial.print(rhoDotExperimental); Serial.print("   "); Serial.print(phiDotExperimental);Serial.print("   ");Serial.print(u); Serial.print("   "); Serial.println(uTwo);
+*/
 
-
-  controlVoltage1 = (u + uTwo) / 2;
-  controlVoltage2 = (u - uTwo) / 2;
+  //controlVoltage1 = (u + uTwo) / 2;
+  //controlVoltage2 = (u - uTwo) / 2;
 
   //  controlPWMOne = (controlVoltage1 / maxVoltage) * 255;
   //  controlPWMTwo = (controlVoltage2 / maxVoltage) * 255;
@@ -265,30 +274,33 @@ void moveFeet(double ft) {
 }
 
 void enc1ISR() {
-
+  enc1ValA = digitalRead(enc1A);
+  enc1ValB = digitalRead(enc1B);
+  
   if (enc1ValA != enc1ValB) {
-    dir = "CCW";
+    dir = "FW";
     count++;
     count++;
   }
   else {
-    dir = "CW";
+    dir = "BW";
     count--;
     count--;
   }
 }
 
 void enc2ISR() {
-
+  enc2ValA = digitalRead(enc2A);
+  enc2ValB = digitalRead(enc2B);
   if (enc2ValA != enc2ValB) {
-    dir = "CCW";
-    count2++;
-    count2++;
+    dir = "BW";
+    count2--;
+    count2--;
   }
   else {
-    dir = "CW";
-    count2--;
-    count2--;
+    dir = "FW";
+    count2++;
+    count2++;
   }
 }
 
