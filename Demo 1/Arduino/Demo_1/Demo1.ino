@@ -67,13 +67,12 @@ double angChange = 0;
 double newVelocity = 0;
 
 // PID controller gains
-double Kp = 25; // tuned to work for
-double Ki = 0; // V*s/theta
-double Kd = 0; // V/thetas*s
+double Kp = 50; // in PWM, tuned to work from simulation with rise time of 0.179 sec
+double Ki = 0; // 
+double Kd = 0; // 
 
 // PID controller gains
-//double KpTwo = 96; // rise time of 0.431 sec
-double KpTwo = 25;
+double KpTwo = 50; // in PWM, tuned to work from simulation with slower rise time of 0.616 sec
 double KiTwo = 0; // V*s/theta
 double KdTwo = 0; // V/thetas*s
 
@@ -115,8 +114,8 @@ double controlVoltage2 = 0;
 double controlPWMOne = 0;
 double controlPWMTwo = 0;
 
-double rhoDot = 0;//0.16;//0.16; // rad/s for 1V
-double phiDot = 0.7;//0.7; // rad/s for 1V
+double rhoDot = 0.16; // feet/s for 1V, used for experiments
+double phiDot = 0.7; // feet/s for 1V, used for experiments
 
 void setup() {
   // put your setup code here, to run once:
@@ -166,30 +165,23 @@ void loop() {
   angularVelocity1 = (count - countBeforeDelay) * 2 * pi / ((double)(currentTime - endTime) * CPR / 1000);
   angularVelocity2 = (count2 - countBeforeDelay2) * 2 * pi / ((double)(currentTime - endTime) * CPR / 1000);
  
-  
  // Serial.print(secTime); Serial.print("    ");Serial.print(angularVelocity1); Serial.print("    ");  Serial.println(angularVelocity2); //Serial.print("    "); Serial.print(u); Serial.print("    "); Serial.println(uTwo);
 
-  rhoDotExperimental = (radius / 12) * ((angularVelocity1 + angularVelocity2) / 2);
-  //Serial.print("    "); Serial.print(rhoDotExperimental);
-    phiDotExperimental = (radius / 12) * ((angularVelocity1 - angularVelocity2) / (distanceBetweenWheels / 12));
+  rhoDotExperimental = (radius / 12) * ((angularVelocity1 + angularVelocity2) / 2); // in feet per second
+  phiDotExperimental = (radius / 12) * ((angularVelocity1 - angularVelocity2) / (distanceBetweenWheels / 12)); // in feet per second
 
 
   //    Serial.print("A: "); Serial.print(enc1ValStart,DEC); Serial.print(" B: "); Serial.print(enc1ValB,DEC);
   //    Serial.print("A2: "); Serial.print(enc2ValStart,DEC); Serial.print(" B2: "); Serial.print(enc2ValB,DEC);
 
-  //controller one
+  // Controller 1 forward velocity
   e = rhoDot - rhoDotExperimental; // error
-  //Serial.print("    "); Serial.print(e);
-  //  e = .3;
-  //e_past = .2;
+  
   double temp = loopSpeed / 1000.0;
   derivate = (e - e_past) / temp ; // approximate the derivative
   e_past = e;
   I = I + e * (loopSpeed / 1000); // summation of error to approximate integral
-  //I += e; // summation of error to approximate integral
- // Serial.print("    "); Serial.println(I);
-  // I = I + (e*temp);
-  if (I > 5) I = 1;
+  if (I > 5) I = 1; // prevent integral term wind up
   if (I < -5) I = -1;
 
   double p_correction = e * Kp;
@@ -197,79 +189,59 @@ void loop() {
   double d_correction = Kd * derivate;
 
    u = p_correction + i_correction + d_correction; // PID controller
-//
-//
-// // Serial.print(temp); Serial.print('\t'); Serial.print(e); Serial.print('\t'); Serial.print(p_correction); Serial.print('\t'); Serial.print(I); Serial.print('\t'); Serial.println(derivate);
-//
-//  //  Serial.print(e); Serial.print('\t'); Serial.println(u);
-//  //Serial.print(u);
-//  //Serial.print('\t');
-//  // Change the directino of the motor based on motor correction
+
+//  // Change the direction of the motor based on motor correction
 ////    if (u < 0) {
 ////      digitalWrite(motorDirection1, HIGH);
 ////    } else {
 ////      digitalWrite(motorDirection1, LOW);
 ////    }
-//
-//  //      Serial.print(I);
-//  //    Serial.print("\t");
-//  // Get the absolute values of the correction
+
+  // Get the absolute values of the correction
   u = abs(u);
   // constrain the correction to valid PWM values
   u = constrain(u, 0, 255);
  
  
-  // controller two
+  // Controller 2 rotational velocity
     eTwo = phiDot - phiDotExperimental; // error
     derivateTwo = (eTwo - e_pastTwo) / (loopSpeed/1000.0); // approximate the derivative
     e_pastTwo = eTwo;
     ITwo = ITwo + (loopSpeed/1000) * eTwo; // summation of error to approximate integral
-    if (ITwo > 5) ITwo = 1;
+    if (ITwo > 5) ITwo = 1; // prevent integral term wind up
     if (ITwo < -5) ITwo = -1;
 
      double p_correction2 = eTwo * KpTwo;
-     double i_correction2 = I * KiTwo;
+     double i_correction2 = ITwo * KiTwo;
      double d_correction2 = KdTwo * derivateTwo;
 
     uTwo = p_correction2 + i_correction2 + d_correction2; // PID controller
 //    uTwo = eTwo*KpTwo + KiTwo * ITwo + KdTwo * derivateTwo; // PID controller
-    //Serial.print(u);
-    //Serial.print('\t');
+ 
     // Change the directino of the motor based on motor correction
 //    if (uTwo < 0) {
 //      digitalWrite(motorDirection2, HIGH);
 //    } else {
 //      digitalWrite(motorDirection2, LOW);
 //    }
-  //      Serial.print(ITwo);
-  //    Serial.print("\t");
-      // Get the absolute values of the correction
+
+    // Get the absolute values of the correction
     uTwo = abs(uTwo);
   
   
     // constrain the correction to valid PWM values
     uTwo = constrain(uTwo, 0, 255);
-   
-  //
-  ////   Serial.print(rhoDotExperimental); Serial.print("   "); Serial.print(phiDotExperimental);Serial.print("   ");Serial.print(u); Serial.print("   "); Serial.println(uTwo);
 
-//controlVoltage1 = (u + uTwo) / 2;
-//controlVoltage2 = (u - uTwo) / 2;
-controlVoltage1 = uTwo;
-controlVoltage2 = uTwo;
+   controlVoltage1 = (u + uTwo) / 2; // convert controller voltages back to motor voltages
+   controlVoltage2 = (u - uTwo) / 2;
 
- 
-
- Serial.print(u);Serial.print("  ");Serial.print(uTwo); Serial.print("  ");Serial.println(angularVelocity2);
-
-
-     analogWrite(motorVoltage1, controlVoltage1); // set motor voltage to u
-     analogWrite(motorVoltage2, controlVoltage2); // set motor voltage to u
+   analogWrite(motorVoltage1, controlVoltage1); // set motor voltage to u
+   analogWrite(motorVoltage2, controlVoltage2); // set motor voltage to u
  
   //   analogWrite(motorVoltage1, 34); // set motor voltage to u
   //   analogWrite(motorVoltage2, 34); // set motor voltage to u
 
-  //  // Delay a certain amount to keep a constant loop speed
+  // Delay a certain amount to keep a constant loop speed
   countBeforeDelay = count;
   countBeforeDelay2 = count2;
   endTime = millis();
