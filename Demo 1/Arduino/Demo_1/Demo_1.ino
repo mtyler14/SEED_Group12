@@ -5,6 +5,7 @@
   To use this code, connect the GND, SCL, and SDA lines to the raspberry pi. Plug in the motor
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
+//harry
 
 enum driveState {forward, rotate, beacon, OneFtForward, idle, idle2, done};
 
