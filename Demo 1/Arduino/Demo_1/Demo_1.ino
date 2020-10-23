@@ -6,7 +6,7 @@
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
 
-enum driveState{forward,rotate,beacon,rotateAndForward,idle,done};
+enum driveState{forward,rotate,beacon,OneFtForward,idle,done};
 
 #include <Wire.h>
 
@@ -208,15 +208,15 @@ void loop() {
 //      count2 = 0;
       if( currPhi >= desPhi ){
          delay(2000);
-         state = rotateAndForward;
+         state = OneFtForward;
          count = 0;
          count2 = 0;
          Serial.println("Rotate");
       }
       break;
 
-    case rotateAndForward:
-      Serial.println("Rotate and Forward");
+    case OneFtForward:
+      Serial.println("1 foot");
       digitalWrite(motorDirection1, LOW);
       digitalWrite(motorDirection2, HIGH);
       analogWrite(motorVoltage1, controlVoltage1);
@@ -229,9 +229,9 @@ void loop() {
       break;
 
     case done: 
-    analogWrite(motorVoltage1, 0);
-    analogWrite(motorVoltage2, 0);
-    break:
+      analogWrite(motorVoltage1, 0);
+      analogWrite(motorVoltage2, 0);
+      break;
 
     
     default:
