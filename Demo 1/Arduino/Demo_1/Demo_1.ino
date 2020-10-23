@@ -6,7 +6,7 @@
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
 
-enum driveState{forward,rotate,beacon,OneFtForward,idle,done};
+enum driveState {forward, rotate, beacon, OneFtForward, idle, idle2, done};
 
 #include <Wire.h>
 
@@ -69,12 +69,12 @@ double newVelocity = 0;
 
 // PID controller gains
 double Kp = 50; // in PWM, tuned to work from simulation with rise time of 0.179 sec
-double Ki = 10; // 
-double Kd = 0; // 
+double Ki = 10; //
+double Kd = 0; //
 
 // PID controller gains
 double KpTwo = 415; // in PWM, tuned to work from simulation with slower rise time of 0.616 sec
-double KiTwo = 0; // V*s/theta
+double KiTwo = 10; // V*s/theta
 double KdTwo = 0; // V/thetas*s
 
 // PID controller one
@@ -149,27 +149,27 @@ void setup() {
   Wire.begin(SLAVE_ADDRESS);
   countsToDrive = moveFeet(5);
   countsToDrive2 = moveFeet(1);
-  desPhi = rotateBot(30);
+  desPhi = rotateBot(360);
   state = idle;
-  
+
   // define callbacks for i2c communication
 
   //  Wire.onReceive(receiveData);
   //  Wire.onRequest(sendData);
- // Serial.println();
+  // Serial.println();
 
 }
 
 int firstLoop = 0;
 void loop() {
-//  while(firstLoop < 5){
-//    delay(1000);
-//    firstLoop++;
-//    state = idle;
-//  }
+  //  while(firstLoop < 5){
+  //    delay(1000);
+  //    firstLoop++;
+  //    state = idle;
+  //  }
 
- 
-  switch(state){
+
+  switch (state) {
     case idle:
       analogWrite(motorVoltage1, 0);
       analogWrite(motorVoltage2, 0);
@@ -184,35 +184,42 @@ void loop() {
       Serial.println("Out of Beacon");
       break;
     case forward:
-     // Serial.println("in fw");
+      // Serial.println("in fw");
       digitalWrite(motorDirection1, LOW);
       digitalWrite(motorDirection2, HIGH);
       analogWrite(motorVoltage1, controlVoltage1);
       analogWrite(motorVoltage2, controlVoltage2);
-      if(count > countsToDrive && count2 > countsToDrive){
-         state = rotate;
-         count = 0;
-         count2 = 0;
-         //Serial.println("Out of Forward");
+      if (count > countsToDrive && count2 > countsToDrive) {
+        state = rotate;
+        count = 0;
+        count2 = 0;
+        //Serial.println("Out of Forward");
       }
       break;
     case rotate:
-     // delay(1000);
+      // delay(1000);
       digitalWrite(motorDirection1, LOW);
-      digitalWrite(motorDirection2, LOW);      
+      digitalWrite(motorDirection2, LOW);
       analogWrite(motorVoltage1, controlVoltage1);
       analogWrite(motorVoltage2, controlVoltage2);
-      currPhi = ((radius/12)/(distanceBetweenWheels/12)) * (((double)(count - count2)/CPR)*2*pi);
+      currPhi = ((radius / 12) / (distanceBetweenWheels / 12)) * (((double)(count - count2) / CPR) * 2 * pi);
       Serial.println(currPhi);
-//      count = 0;
-//      count2 = 0;
-      if( currPhi >= desPhi ){
-         delay(2000);
-         state = OneFtForward;
-         count = 0;
-         count2 = 0;
-         Serial.println("Rotate");
+      //      count = 0;
+      //      count2 = 0;
+      if ( currPhi >= desPhi ) {
+        state = idle2;
+        count = 0;
+        count2 = 0;
+        Serial.println("Rotate");
       }
+      break;
+
+    case idle2:
+      analogWrite(motorVoltage1, 0);
+      analogWrite(motorVoltage2, 0);
+      delay(1000);
+      state = OneFtForward;
+      Serial.println("Out of Idle 2");
       break;
 
     case OneFtForward:
@@ -221,23 +228,22 @@ void loop() {
       digitalWrite(motorDirection2, HIGH);
       analogWrite(motorVoltage1, controlVoltage1);
       analogWrite(motorVoltage2, controlVoltage2);
-      if(count > countsToDrive2 && count2 > countsToDrive2){
-         state = done;
-         count = 0;
-         count2 = 0;
+      if (count > countsToDrive2 && count2 > countsToDrive2) {
+        state = done;
+        count = 0;
+        count2 = 0;
       }
       break;
 
-    case done: 
+    case done:
       analogWrite(motorVoltage1, 0);
       analogWrite(motorVoltage2, 0);
       break;
 
-    
     default:
       state = idle;
       break;
-    
+
   }
   currentTime = millis(); //collect time of program in milliseconds
   double secTime = (double)currentTime / 1000;
@@ -246,16 +252,16 @@ void loop() {
 
   rhoDotExperimental = (radius / 12) * ((angularVelocity1 + angularVelocity2) / 2); // in feet per second
   phiDotExperimental = (radius / 12) * ((angularVelocity1 - angularVelocity2) / (distanceBetweenWheels / 12)); // in feet per second
-  
+
   // Controller 1 forward velocity
   e = rhoDot - rhoDotExperimental; // error
-  
+
   double temp = loopSpeed / 1000.0;
   derivate = (e - e_past) / temp ; // approximate the derivative
   e_past = e;
   I = I + e * (loopSpeed / 1000); // summation of error to approximate integral
-  if (I > 5) I = 1; // prevent integral term wind up
-  if (I < -5) I = -1;
+  if (I > 5) I = 5; // prevent integral term wind up
+  if (I < -5) I = -5;
 
   double p_correction = e * Kp;
   double i_correction = I * Ki;
@@ -266,15 +272,15 @@ void loop() {
   u = abs(u);
   // constrain the correction to valid PWM values
   u = constrain(u, 0, 255);
- 
- 
+
+
   // Controller 2 rotational velocity
   eTwo = phiDot - phiDotExperimental; // error
-  derivateTwo = (eTwo - e_pastTwo) / (loopSpeed/1000.0); // approximate the derivative
+  derivateTwo = (eTwo - e_pastTwo) / (loopSpeed / 1000.0); // approximate the derivative
   e_pastTwo = eTwo;
-  ITwo = ITwo + (loopSpeed/1000) * eTwo; // summation of error to approximate integral
-  if (ITwo > 5) ITwo = 1; // prevent integral term wind up
-  if (ITwo < -5) ITwo = -1;
+  ITwo = ITwo + (loopSpeed / 1000) * eTwo; // summation of error to approximate integral
+  if (ITwo > 5) ITwo = 5; // prevent integral term wind up
+  if (ITwo < -5) ITwo = -5;
 
   double p_correction2 = eTwo * KpTwo;
   double i_correction2 = ITwo * KiTwo;
@@ -308,15 +314,15 @@ int moveFeet(double ft) {
 }
 
 
-double rotateBot(double degree){
-  double phi = (degree * pi)/180;
+double rotateBot(double degree) {
+  double phi = (degree * pi) / 180;
   return phi;
 }
 
 void enc1ISR() {
   enc1ValA = digitalRead(enc1A);
   enc1ValB = digitalRead(enc1B);
-  
+
   if (enc1ValA != enc1ValB) {
     dir = "FW";
     count++;
