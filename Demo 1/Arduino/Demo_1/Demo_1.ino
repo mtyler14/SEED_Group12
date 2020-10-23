@@ -6,7 +6,7 @@
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
 
-enum driveState{forward,rotate,beacon,idle};
+enum driveState{forward,rotate,beacon,rotateAndForward,idle,done};
 
 #include <Wire.h>
 
@@ -57,7 +57,6 @@ long startTime = 0;
 long endTime = -1;
 long currentTime = 0;
 long timeSinceCall = 0;
-void reportData();
 
 // Angular measurement variables
 double angPos = 0;
@@ -70,7 +69,7 @@ double newVelocity = 0;
 
 // PID controller gains
 double Kp = 50; // in PWM, tuned to work from simulation with rise time of 0.179 sec
-double Ki = 0; // 
+double Ki = 10; // 
 double Kd = 0; // 
 
 // PID controller gains
@@ -120,8 +119,9 @@ double rhoDot = 0.16; // feet/s for 1V, used for experiments
 double phiDot = 0.7; // feet/s for 1V, used for experiments
 
 int countsToDrive = 0;
-int currPhi = 0;
-int desPhi = 0;
+int countsToDrive2 = 0;
+double currPhi = 0;
+double desPhi = 0;
 driveState state;
 void setup() {
   // put your setup code here, to run once:
@@ -148,6 +148,7 @@ void setup() {
   // initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
   countsToDrive = moveFeet(5);
+  countsToDrive2 = moveFeet(1);
   desPhi = rotateBot(30);
   state = idle;
   
@@ -167,8 +168,7 @@ void loop() {
 //    state = idle;
 //  }
 
-  
-
+ 
   switch(state){
     case idle:
       analogWrite(motorVoltage1, 0);
@@ -184,7 +184,7 @@ void loop() {
       Serial.println("Out of Beacon");
       break;
     case forward:
-      Serial.println("in fw");
+     // Serial.println("in fw");
       digitalWrite(motorDirection1, LOW);
       digitalWrite(motorDirection2, HIGH);
       analogWrite(motorVoltage1, controlVoltage1);
@@ -193,18 +193,47 @@ void loop() {
          state = rotate;
          count = 0;
          count2 = 0;
-         Serial.println("Out of Forward");
+         //Serial.println("Out of Forward");
       }
       break;
     case rotate:
-      count = 0;
-      count2 = 0;
+     // delay(1000);
       digitalWrite(motorDirection1, LOW);
       digitalWrite(motorDirection2, LOW);      
       analogWrite(motorVoltage1, controlVoltage1);
       analogWrite(motorVoltage2, controlVoltage2);
-      currPhi = (radius/distanceBetweenWheels) * (count - count2);
+      currPhi = ((radius/12)/(distanceBetweenWheels/12)) * (((double)(count - count2)/CPR)*2*pi);
+      Serial.println(currPhi);
+//      count = 0;
+//      count2 = 0;
+      if( currPhi >= desPhi ){
+         delay(2000);
+         state = rotateAndForward;
+         count = 0;
+         count2 = 0;
+         Serial.println("Rotate");
+      }
       break;
+
+    case rotateAndForward:
+      Serial.println("Rotate and Forward");
+      digitalWrite(motorDirection1, LOW);
+      digitalWrite(motorDirection2, HIGH);
+      analogWrite(motorVoltage1, controlVoltage1);
+      analogWrite(motorVoltage2, controlVoltage2);
+      if(count > countsToDrive2 && count2 > countsToDrive2){
+         state = done;
+         count = 0;
+         count2 = 0;
+      }
+      break;
+
+    case done: 
+    analogWrite(motorVoltage1, 0);
+    analogWrite(motorVoltage2, 0);
+    break:
+
+    
     default:
       state = idle;
       break;
@@ -265,9 +294,9 @@ void loop() {
   countBeforeDelay2 = count2;
   endTime = millis();
   delayValue = loopSpeed - ((millis() - currentTime));
-  Serial.println(delayValue);
+  //Serial.println(delayValue);
   delay(delayValue); // delay accordingly for 50ms
-  Serial.print(controlVoltage1); Serial.print(" "); Serial.print(controlVoltage2);Serial.print(" "); Serial.println(state);
+  //Serial.print(controlVoltage1); Serial.print(" "); Serial.print(controlVoltage2);Serial.print(" "); Serial.println(state);
 
 }
 
@@ -283,7 +312,6 @@ double rotateBot(double degree){
   double phi = (degree * pi)/180;
   return phi;
 }
-
 
 void enc1ISR() {
   enc1ValA = digitalRead(enc1A);
