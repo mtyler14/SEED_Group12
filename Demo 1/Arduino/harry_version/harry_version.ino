@@ -30,7 +30,7 @@ int encLeftValA = 0;
 int encLeftValB = 0;
 
 // Robot parameters
-double distanceBetweenWheels = 8.5; //inches
+double distanceBetweenWheels = 9.18; //inches
 double radius = 3; //in inches
 double wheelCircumference = radius * M_PI * 2; //1.44 ft
 
@@ -74,8 +74,8 @@ double oldErrorRightPos = 0;
 
 // Left velocity PID controller
 double KpLeft = .1;
-double KiLeft = 0; 
-double KdLeft = 0; 
+double KiLeft = 0;
+double KdLeft = 0;
 
 double errorLeft = 0;
 double controllerOutputLeft = 0;
@@ -85,9 +85,9 @@ double oldErrorLeft = 0;
 double LeftAngularSpeed = 0;
 
 // Left positional controller
-double KpLeftPos = .1; 
-double KiLeftPos = 0; 
-double KdLeftPos = 0; 
+double KpLeftPos = .1;
+double KiLeftPos = 0;
+double KdLeftPos = 0;
 
 double errorLeftPos = 0;
 double controllerOutputLeftPos = 0;
@@ -103,8 +103,8 @@ void encRightISR();
 void encLeftISR();
 
 // Variables to control the speed of each wheel in counts per second
-double desiredRightAngularSpeed = CPR / 3; // feet/s for 1V, used for experiments
-double desiredLeftAngularSpeed = CPR / 3; // feet/s for 1V, used for experiments
+double desiredRightAngularSpeed = CPR; // feet/s for 1V, used for experiments
+double desiredLeftAngularSpeed = CPR; // feet/s for 1V, used for experiments
 
 // Variables to control the distance the robot moves
 int desiredCountsRight = 0;
@@ -125,59 +125,59 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encLeftA),  encLeftISR,   CHANGE);
 
   pinMode(motorRightDirection,  OUTPUT);
-  pinMode(motorRight,           OUTPUT); 
+  pinMode(motorRight,           OUTPUT);
   pinMode(motorLeftDirection,   OUTPUT);
-  pinMode(motorLeft,            OUTPUT); 
+  pinMode(motorLeft,            OUTPUT);
 
   digitalWrite(enc2Volt, HIGH);
   digitalWrite(motorEnable, HIGH);
   // Initialize the motors running forwards
-  motorsForwards();
+  motorsIdle();
 
-  // Drive forwards 10 feet
-  move(10, FORWARDS);
-  // Rotate 90 degrees clockwise
-  move(90, ROTATION);
+   move(10, FORWARDS);
+   move(180, ROTATION);
+  
 }
 
 void loop() {
 }
 
 // Set the motors to move forwards
-void motorsForwards(){
+void motorsForwards() {
   digitalWrite(motorRightDirection, LOW);
   digitalWrite(motorLeftDirection, HIGH);
 }
 
 
 // Set the motors to turn the robot ccw
-void motorsCounterclockwise(){
+void motorsCounterclockwise() {
   digitalWrite(motorRightDirection, HIGH);
   digitalWrite(motorLeftDirection, HIGH);
 }
 
 
 // Set the motors to turn CW
-void motorsClockwise(){
+void motorsClockwise() {
   digitalWrite(motorRightDirection, LOW);
   digitalWrite(motorLeftDirection, LOW);
 }
 
 
 // Turn the motors off
-void motorsIdle(){
+void motorsIdle() {
   analogWrite(motorLeft, 0);
-  analogWrite(motorRightDirection, 0);
+  analogWrite(motorRight, 0);
+  delay(750);
 }
 
 
-void move(int distance, int forwardsOrDegrees){
+void move(int distance, int forwardsOrDegrees) {
   // Initialize the counts to zero before movements
   countRight = 0;
   countLeft = 0;
 
   // Set counts and directions
-  switch (forwardsOrDegrees){
+  switch (forwardsOrDegrees) {
     case FORWARDS:
       motorsForwards();
       desiredCountsRight = feet2Counts(distance);
@@ -187,7 +187,7 @@ void move(int distance, int forwardsOrDegrees){
       desiredCountsRight = degrees2Counts(distance);
       desiredCountsLeft = degrees2Counts(distance);
 
-      if (distance > 0){
+      if (distance > 0) {
         motorsClockwise();
         // Set the desired counts to be negative for the motor in reverse
         desiredCountsRight *= -1;
@@ -204,8 +204,13 @@ void move(int distance, int forwardsOrDegrees){
   }
 
   // While the encoder counts are more than a certain amount from the target
-  while (abs((desiredCountsRight - countRight)) > tolerance || abs((desiredCountsLeft - countLeft)) > tolerance) {
+  while (abs((abs(desiredCountsRight) - abs(countRight))) > tolerance || abs((abs(desiredCountsLeft) - abs(countLeft))) > tolerance) {
     currentTime = millis(); //collect time of program in milliseconds
+
+//    If both motors have gone too far then stop then exit the loop
+    if (abs(countRight) > abs(desiredCountsRight) || abs(countLeft) > abs(desiredCountsLeft)){
+      break;
+    }
 
     // Ensures that the same encoder counts are used for each calculation. Otherwise the encoder counts could change during the loop
     int currentCountsRight = countRight;
@@ -221,7 +226,7 @@ void move(int distance, int forwardsOrDegrees){
     controllerOutputRightPos = errorRightPos * KpRightPos + derivativeRightPos * KdRightPos + integralRightPos * KiRightPos;
     controllerOutputRightPos = abs(controllerOutputRightPos);
     controllerOutputRight = constrain(controllerOutputRightPos, 0, CPR / 2);
-    // This output should be the desiredRightAngularSpeed 
+    // This output should be the desiredRightAngularSpeed
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////// Right motor control calculations ///////////////////////////////////////////////////////
@@ -248,10 +253,10 @@ void move(int distance, int forwardsOrDegrees){
     integralLeftPos += errorLeftPos * (loopSpeed / 1000.0);
     if (integralLeftPos > 5) integralLeftPos = 5; // prevent integral term wind up
     if (integralLeftPos < -5) integralLeftPos = -5;
-    
+
     controllerOutputLeftPos = errorLeftPos * KpLeftPos + derivativeLeftPos * KdLeftPos + integralLeftPos * KiLeftPos;
     controllerOutputLeftPos = abs(controllerOutputLeftPos);
-    controllerOutputLeftPos = constrain(controllerOutputLeftPos, 0, CPR / 2); 
+    controllerOutputLeftPos = constrain(controllerOutputLeftPos, 0, CPR / 2);
     // This output should be desiredLeftAngularSpeed
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -267,22 +272,22 @@ void move(int distance, int forwardsOrDegrees){
     if (integralLeft < -5) integralLeft = -5;
 
     // Calculate the controller output and constrain it
-    controllerOutputRight = errorLeft * KpLeft + integralLeft * KiLeft + KdLeft * derivativeLeft; // PID controller
-    controllerOutputRight = abs(controllerOutputRight);
-    controllerOutputRight = constrain(controllerOutputRight, 0, 255);
+    controllerOutputLeft = errorLeft * KpLeft + integralLeft * KiLeft + KdLeft * derivativeLeft; // PID controller
+    controllerOutputLeft = abs(controllerOutputLeft);
+    controllerOutputLeft = constrain(controllerOutputLeft, 0, 255);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // If one motor has gone farther than the other then slow it down until the motors are back in sync
-    if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 50){
-      controllerOutputRight /= 2;
+    if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 50) {
+      controllerOutputRight /= 3;
     }
-    if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 50){
-      controllerOutputRight /= 2;
+    else if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 50) {
+      controllerOutputLeft  /= 3;
     }
-    
+
     // Send the commands to the motor
     analogWrite(motorRight, controllerOutputRight);
-    analogWrite(motorLeft, controllerOutputRight);
+    analogWrite(motorLeft, controllerOutputLeft);
 
     oldErrorRight = errorRight;
     oldErrorLeft = errorLeft;
@@ -295,12 +300,13 @@ void move(int distance, int forwardsOrDegrees){
 
     delay(delayValue); // delay accordingly for 50ms
   }
+  Serial.println("The movement finished");
   motorsIdle();
 }
 
 
 // Convert degrees to encoder counts
-int degrees2Counts(int degrees){
+int degrees2Counts(int deg) {
   // Circumference traced by wheels
   double pathLength = distanceBetweenWheels * M_PI;         // cm
   // Ratio of wheel circumference to path length
@@ -310,7 +316,7 @@ int degrees2Counts(int degrees){
   // Degrees per encoder count
   double countsPerDegree = CPR / degreePerRotation;         // counts / degree
   // Counts for desired rotation
-  double desiredCounts = countsPerDegree * degrees;         // counts
+  double desiredCounts = countsPerDegree * deg;         // counts
   // Return the desired counts
   return desiredCounts;
 }
