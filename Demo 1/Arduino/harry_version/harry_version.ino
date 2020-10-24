@@ -324,7 +324,6 @@ int feet2Counts(double ft) {
   return driveCounts;
 }
 
-
 double degrees2Radians(double degree) {
   double phi = (degree * M_PI) / 180;
   return phi;
