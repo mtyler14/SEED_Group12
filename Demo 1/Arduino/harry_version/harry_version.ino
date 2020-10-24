@@ -106,6 +106,11 @@ void encLeftISR();
 double desiredRightAngularSpeed = CPR; // feet/s for 1V, used for experiments
 double desiredLeftAngularSpeed = CPR; // feet/s for 1V, used for experiments
 
+double desiredRightAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
+double desiredLeftAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
+
+
+
 // Variables to control the distance the robot moves
 int desiredCountsRight = 0;
 int desiredCountsLeft = 0;
@@ -134,9 +139,13 @@ void setup() {
   // Initialize the motors running forwards
   motorsIdle();
 
-   move(10, FORWARDS);
-   move(180, ROTATION);
-  
+  move(3, FORWARDS);
+  move(-135, ROTATION);
+  move (3, FORWARDS);
+  move(90, ROTATION);
+  move(3, FORWARDS);
+  move(-135, ROTATION);
+  move(3, FORWARDS);
 }
 
 void loop() {
@@ -176,16 +185,26 @@ void move(int distance, int forwardsOrDegrees) {
   countRight = 0;
   countLeft = 0;
 
+  double localAngularSpeedRight = 0;
+  double localAngularSpeedLeft = 0;
+
   // Set counts and directions
   switch (forwardsOrDegrees) {
     case FORWARDS:
       motorsForwards();
       desiredCountsRight = feet2Counts(distance);
       desiredCountsLeft = feet2Counts(distance);
+
+      localAngularSpeedRight = desiredRightAngularSpeed;
+      localAngularSpeedLeft = desiredLeftAngularSpeed;
+      
       break;
     case ROTATION:
       desiredCountsRight = degrees2Counts(distance);
       desiredCountsLeft = degrees2Counts(distance);
+
+      localAngularSpeedRight = desiredRightAngularSpeedLow;
+      localAngularSpeedLeft = desiredLeftAngularSpeedLow;
 
       if (distance > 0) {
         motorsClockwise();
@@ -207,8 +226,8 @@ void move(int distance, int forwardsOrDegrees) {
   while (abs((abs(desiredCountsRight) - abs(countRight))) > tolerance || abs((abs(desiredCountsLeft) - abs(countLeft))) > tolerance) {
     currentTime = millis(); //collect time of program in milliseconds
 
-//    If both motors have gone too far then stop then exit the loop
-    if (abs(countRight) > abs(desiredCountsRight) || abs(countLeft) > abs(desiredCountsLeft)){
+    //    If both motors have gone too far then stop then exit the loop
+    if (abs(countRight) > abs(desiredCountsRight) || abs(countLeft) > abs(desiredCountsLeft)) {
       break;
     }
 
@@ -233,7 +252,7 @@ void move(int distance, int forwardsOrDegrees) {
     // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
     rightAngularSpeed = abs((currentCountsRight - countRightBeforeDelay) / ((double)(currentTime - endTime) / 1000));
     // Right motor error in angular speed
-    errorRight = desiredRightAngularSpeed - rightAngularSpeed; // error
+    errorRight = localAngularSpeedRight - rightAngularSpeed; // error
 
     derivativeRight = (errorRight - oldErrorRight) / (loopSpeed / 1000.0) ; // approximate the derivative
     integralRight = integralRight + errorRight * (loopSpeed / 1000); // summation of error to approximate integral
@@ -264,7 +283,7 @@ void move(int distance, int forwardsOrDegrees) {
     // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
     LeftAngularSpeed = abs((currentCountsLeft - countLeftBeforeDelay) / ((double)(currentTime - endTime) / 1000));
     // Left motor error in angular speed
-    errorLeft = desiredLeftAngularSpeed - LeftAngularSpeed; // error
+    errorLeft = localAngularSpeedLeft - LeftAngularSpeed; // error
 
     derivativeLeft = (errorLeft - oldErrorLeft) / (loopSpeed / 1000.0); // approximate the derivative
     integralLeft = integralLeft + (loopSpeed / 1000) * errorLeft; // summation of error to approximate integral
