@@ -1,5 +1,14 @@
 """
-TODO
+This code accurately detects the angle between a camera and ArUco tags in the camera's field of view. 
+It does this by detecting the tags and then using opencv functions to find the rotation and translation vectors 
+of each tag in the camera's coordinate system. The horizontal angle is then determined by taking the inverse tangent
+of the x translation divided by the z translation. 
+
+The intrinsic matrix for the camera was determined by calibrating the camera with opencv built in calibration functions.
+Once the camera has been calibrated, the type of tag must be specified in the code.
+
+To run this program make sure that a camera is connected to a raspberry pi as well as a LCD connected over I2C.
+Also make sure that the libraries imported below are installed on the local system or virtual environment. 
 """
 
 import cv2 as cv
@@ -200,27 +209,5 @@ if __name__ == "__main__":
                 time.sleep(.5)
                 bus = smbus2.SMBus(1)
 
-
-   
-# Code for manual k calculation
-# focal = 3.04  # mm 3.04 to start
-# sensor_y = 2.760  # mm 2.760 to start
-# sensor_x = 3.68 # mm 3.68 to start
-# pixels_per_mm_y = y / sensor_y  # Ratio for converting pixels to mm based on the pixel size and sensor size
-# pixels_per_mm_x = x / sensor_x
-
-# focal_x = int(pixels_per_mm_x * focal)
-# focal_y = int(pixels_per_mm_y * focal)
-
-# center_x = int(x / 2)
-# center_y = int(y / 2)
-
-# # 5: 11.3
-# # 4: 14.03
-# # 3: 18.43
-# # 2: 26.56
-
-# # Intrinsic camera matrix
-# k = np.array([[focal_x, 0, center_x], [0, focal_y, center_y], [0, 0, 1]])
 
 
