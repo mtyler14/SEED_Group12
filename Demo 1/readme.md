@@ -1,4 +1,4 @@
-![Robot](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%201/images/derrick.png)
+![Robot](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%201/images/derrick.JPG)
 
 # Demo 1
 This folder contains all the code for Demo 1. Each folder contains code related to portions of this project including: computer vision, movement, and simulation.
