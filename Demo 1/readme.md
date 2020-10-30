@@ -1,4 +1,4 @@
-![Robot](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%201/images/derrick.JPG =100x200)
+![Robot](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%201/images/derrick.JPG)
 
 Figure 1: Robot Configuration
 
