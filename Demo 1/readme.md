@@ -16,5 +16,5 @@ Once the angle has been detected, it is displayed on and I2C screen connected to
 
 ## Matlab
 The MATLAB files include the Demo 1 main script and two Simulink models for each of the PID controllers. The script file contains the step response data for the angular velocities for the motors, the tuned first order transfer functions, and the implementation of the Simulink models for the controllers. The simulated transfer functions are determined based on the settling time and time constant for each motor. The experimental data for the step responses is compared to the simulated transfer functions to ensure an accurate match and the simulated transfer functions are then used in the close loop block diagrams for the Simulink models. Figures 1 and 2 show the step response comparisons for motor 1 and motor 2. Proportional controllers are used for each motor, where the gain represents the motor voltage required per radian per second. The gains are converted to voltage per counts per second upon implementation with the arduino code.
-![Motor 1](/SEED_Group12/Demo 1/images/motor1.png)
+![Motor 1](/Demo 1/images/motor1.png)
 
