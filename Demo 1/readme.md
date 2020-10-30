@@ -10,7 +10,10 @@ near its requested destination.
 
 ## Computer Vision
 A Raspberry Pi (RPI) and RPI camera are used to detect ArUco tags. The goal of this detection is to determine the angle between the camera's z axis and the tag.
-The camera was calibrated to account for lense distortion at the edge of its field of fiew. This ensures that that markers near the edge of the camera's field of view
+The camera was calibrated to account for lense distortion at the edge of its field of fiew. This was done by taking multiple images of the checkerboard below and
+having OpenCv calculate the intrinsic camera matrix.
+![Checkerboard](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%201/images/Checkerboard-A4-25mm-8x6.pdf)
+This ensures that that markers near the edge of the camera's field of view
 are reported correctly. The software uses OpenCV's ArUco functions to detect markers and return their location in the image. It also uses the solvePnP function to get the
 location and orientation of the tag in the image in the camera's coordinate system. The horizontal and vertical angle of the tag can then be determined with trig.
 
