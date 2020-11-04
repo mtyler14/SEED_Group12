@@ -57,16 +57,6 @@ double integralRight = 0;
 double oldErrorRight = 0;
 double rightAngularSpeed = 0;
 
-// Right positions controller
-double KpRightPos = .1;
-double KiRightPos = 0;
-double KdRightPos = 0;
-
-double errorRightPos = 0;
-double controllerOutputRightPos = 0;
-double derivativeRightPos = 0;
-double integralRightPos = 0;
-double oldErrorRightPos = 0;
 
 /////////////////////////////////////////////////////////
 // Setting integral and derivative gains might reduce the need to slow one motor down if it gets ahead of the other
@@ -83,17 +73,6 @@ double derivativeLeft = 0;
 double integralLeft = 0;
 double oldErrorLeft = 0;
 double LeftAngularSpeed = 0;
-
-// Left positional controller
-double KpLeftPos = .1;
-double KiLeftPos = 0;
-double KdLeftPos = 0;
-
-double errorLeftPos = 0;
-double controllerOutputLeftPos = 0;
-double derivativeLeftPos = 0;
-double integralLeftPos = 0;
-double oldErrorLeftPos = 0;
 
 double loopSpeed = 50; // 50ms for 20Hz to prevent noise
 int delayValue = 0;
@@ -188,7 +167,6 @@ void move(int distance, int forwardsOrDegrees) {
   double localAngularSpeedRight = 0;
   double localAngularSpeedLeft = 0;
 
-
   // TODO Add states for locating tags and for driving in a circle
   // Set counts and directions
   switch (forwardsOrDegrees) {
@@ -238,18 +216,6 @@ void move(int distance, int forwardsOrDegrees) {
     int currentCountsRight = countRight;
     int currentCountsLeft = countLeft;
 
-    //////////////////////////////////////////////// Right motor positional Calculations ///////////////////////////////////////////////////////
-    errorRightPos = currentCountsRight - desiredCountsRight;
-    derivativeRightPos = (errorRightPos - oldErrorRightPos) / (loopSpeed / 1000.0);
-    integralRightPos += errorRightPos * (loopSpeed / 1000.0);
-    if (integralRightPos > 5) integralRightPos = 5; // prevent integral term wind up
-    if (integralRightPos < -5) integralRightPos = -5;
-
-    controllerOutputRightPos = errorRightPos * KpRightPos + derivativeRightPos * KdRightPos + integralRightPos * KiRightPos;
-    controllerOutputRightPos = abs(controllerOutputRightPos);
-    controllerOutputRight = constrain(controllerOutputRightPos, 0, CPR / 2);
-    // This output should be the desiredRightAngularSpeed
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////// Right motor control calculations ///////////////////////////////////////////////////////
     // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
@@ -268,19 +234,6 @@ void move(int distance, int forwardsOrDegrees) {
     controllerOutputRight = constrain(controllerOutputRight, 0, 255);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-    //////////////////////////////////////////////// Left motor positional Calculations ///////////////////////////////////////////////////////
-    errorLeftPos = currentCountsLeft - desiredCountsLeft;
-    derivativeLeftPos = (errorLeftPos - oldErrorLeftPos) / (loopSpeed / 1000.0);
-    integralLeftPos += errorLeftPos * (loopSpeed / 1000.0);
-    if (integralLeftPos > 5) integralLeftPos = 5; // prevent integral term wind up
-    if (integralLeftPos < -5) integralLeftPos = -5;
-
-    controllerOutputLeftPos = errorLeftPos * KpLeftPos + derivativeLeftPos * KdLeftPos + integralLeftPos * KiLeftPos;
-    controllerOutputLeftPos = abs(controllerOutputLeftPos);
-    controllerOutputLeftPos = constrain(controllerOutputLeftPos, 0, CPR / 2);
-    // This output should be desiredLeftAngularSpeed
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////// Left motor control calculations ///////////////////////////////////////////////////////
     // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
