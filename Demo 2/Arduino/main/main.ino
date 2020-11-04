@@ -8,6 +8,7 @@
 
 #define FORWARDS  1
 #define ROTATION  0
+#define SLAVE_ADDRESS 0x04
 
 // Encoder settings
 const int CPR = 3200;
@@ -93,11 +94,16 @@ double desiredLeftAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experime
 // Variables to control the distance the robot moves
 int desiredCountsRight = 0;
 int desiredCountsLeft = 0;
+int desiredDistance = 0;
+int desiredAngle = 0;
 
 // Encoder must read within this values of the desired counts to be considered position reached
 int tolerance = 5;
 
 void setup() {
+  Wire.begin(SLAVE_ADDRESS);
+  Wire.onReceive(receiveData);
+  
   Serial.begin(9600);
   pinMode(encRightA,  INPUT_PULLUP);
   pinMode(encLeftA,   INPUT_PULLUP);
@@ -340,5 +346,14 @@ void encLeftISR() {
     dir = "FW";
     countLeft++;
     countLeft++;
+  }
+}
+
+
+// callback for received data. Receive data from the raspberry pi
+void receiveData(int byteCount) {
+  while (Wire.available()) {
+    desiredAngle = Wire.read();
+    desiredDistance = Wire.read();
   }
 }

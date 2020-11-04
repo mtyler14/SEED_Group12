@@ -170,8 +170,8 @@ def display_angle(angle):
     lcd.message = f"{angle}     "
 
 # Writes a byte to the Arduino
-def write_number(address,value):
-    bus.write_byte_data(address,0,value)
+def write_numbers(address,value):
+    bus.write_i2c_block_data(address,0,value)
 
 
 if __name__ == "__main__":
@@ -193,24 +193,18 @@ if __name__ == "__main__":
     while True:
         try:
             old_angle = None
-            old_distance = None
             # Capture an image and get the x and y angles of the ArUco tag
             image = capture_image()
             # cv.imshow("image", image)
             # cv.waitKey(0)
             angle_x, distance = marker_angle_distance(image)
+            numbers_to_send = [angle_x,distance]
 
             if angle_x != old_angle:
                 print(angle_x)
                 display_angle(angle_x)
-                write_number(arduino_address, angle_x)
+                write_numbers(arduino_address, numbers_to_send)
                 old_angle = angle_x
-            else:
-                pass
-
-            if distance != old_distance:
-                write_number(arduino_address, distance)
-                old_distance = distance
             else:
                 pass
 
