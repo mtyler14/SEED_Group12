@@ -157,6 +157,7 @@ def marker_angle_distance(image):
     angle = np.rad2deg(angle)
     angle = -angle  # For some reason to the left of the camera center is supposed to be positive
 
+    # Calculate the distance of the tag from the camera
     distance = np.sqrt(x**2 + z**2)
 
     return round(angle, 2), round(distance, 2)
