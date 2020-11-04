@@ -188,6 +188,8 @@ void move(int distance, int forwardsOrDegrees) {
   double localAngularSpeedRight = 0;
   double localAngularSpeedLeft = 0;
 
+
+  // TODO Add states for locating tags and for driving in a circle
   // Set counts and directions
   switch (forwardsOrDegrees) {
     case FORWARDS:
@@ -222,6 +224,7 @@ void move(int distance, int forwardsOrDegrees) {
       break;
   }
 
+  // TODO: change this to work based on the difference in percentage of distance completed
   // While the encoder counts are more than a certain amount from the target
   while (abs((abs(desiredCountsRight) - abs(countRight))) > tolerance || abs((abs(desiredCountsLeft) - abs(countLeft))) > tolerance) {
     currentTime = millis(); //collect time of program in milliseconds
