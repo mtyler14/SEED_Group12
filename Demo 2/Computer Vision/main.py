@@ -27,6 +27,7 @@ import k_calibration as k_calib
 # sys.exit()
 # print("Done calibrating")
 
+
 def calibration():
     with picamera.PiCamera() as camera:
         time.sleep(1)
@@ -168,10 +169,15 @@ def display_angle(angle):
     lcd.cursor_position(8, 1)
     lcd.message = f"{angle}     "
 
+# Writes a byte to the Arduino
+def write_number(address,value):
+    bus.write_byte_data(address,0,value)
+
 
 if __name__ == "__main__":
     # create the I2C bus
     bus = smbus2.SMBus(1)
+    arduino_address = 0x04
 
     # Initialize the LCD
     lcd_columns = 16
@@ -187,6 +193,7 @@ if __name__ == "__main__":
     while True:
         try:
             old_angle = None
+            old_distance = None
             # Capture an image and get the x and y angles of the ArUco tag
             image = capture_image()
             # cv.imshow("image", image)
@@ -195,10 +202,17 @@ if __name__ == "__main__":
 
             if angle_x != old_angle:
                 print(angle_x)
-                display_angle(angle_x)    
+                display_angle(angle_x)
+                write_number(arduino_address, angle_x)
                 old_angle = angle_x
             else:
-                pass            
+                pass
+
+            if distance != old_distance:
+                write_number(arduino_address, distance)
+                old_distance = distance
+            else:
+                pass
 
         # Catch keyboard interrupts to exit cleanly from the program
         except KeyboardInterrupt:
