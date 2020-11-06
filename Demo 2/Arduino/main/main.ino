@@ -37,6 +37,11 @@ double radius = 3; //in inches
 double wheelCircumference = radius * M_PI * 2; //1.44 ft
 double wheelToCenter = distanceBetweenWheels / 2; //4.59 inches
 
+//Circle parameters
+double leftWheelRadius = 0;
+double rightWheelRadius = 0;
+double angularSpeedRatio = 0;
+
 // Motor pins
 int motorRightDirection = 7;
 int motorRight = 9;
@@ -103,8 +108,8 @@ int desiredAngle = 0;
 int tolerance = 5;
 
 void setup() {
-  Wire.begin(SLAVE_ADDRESS);
-  Wire.onReceive(receiveData);
+//  Wire.begin(SLAVE_ADDRESS);
+//  Wire.onReceive(receiveData);
   
   Serial.begin(9600);
   pinMode(encRightA,  INPUT_PULLUP);
@@ -208,11 +213,18 @@ void move(int distance, int typeOfMotion) {
     case CIRCLE: //Configured for a clockwise circle around beacon
       motorsForwards();
       //calculate the radius the LEFT wheel will trace
-      double leftWheelRadius = distance + wheelToCenter/12; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
+      leftWheelRadius = distance + wheelToCenter/12; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
       desiredCountsLeft = radius2Counts(leftWheelRadius);
+      
       //calculate the radius the RIGHT wheel will trace
-      double rightWheelRadius = distance - wheelToCenter/12;
+      rightWheelRadius = distance - wheelToCenter/12;
       desiredCountsRight = radius2Counts(rightWheelRadius);
+
+      angularSpeedRatio = desiredCountsRight/desiredCountsLeft; //By using this ratio we can modify the voltage of the right wheel to be slower
+
+      localAngularSpeedRight = desiredRightAngularSpeed * angularSpeedRatio;
+      localAngularSpeedLeft = desiredLeftAngularSpeed;
+      
     default:
       motorsIdle();
       break;
@@ -381,9 +393,9 @@ void encLeftISR() {
 
 
 // callback for received data. Receive data from the raspberry pi
-void receiveData(int byteCount) {
-  while (Wire.available()) {
-    desiredAngle = Wire.read();
-    desiredDistance = Wire.read();
-  }
-}
+//void receiveData(int byteCount) {
+//  while (Wire.available()) {
+//    desiredAngle = Wire.read();
+//    desiredDistance = Wire.read();
+//  }
+//}
