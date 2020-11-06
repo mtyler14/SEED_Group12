@@ -6,6 +6,7 @@
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
 
+#define CIRCLE    2
 #define FORWARDS  1
 #define ROTATION  0
 
@@ -15,7 +16,7 @@ const int encRightA = 2;
 const int encRightB = 5;
 const int encLeftA = 3;
 const int encLeftB = 6;
-const int enc2Volt = 11;  //What is this?
+const int enc2Volt = 11;  //What is this? <- applies a +5V to one of the encoders, since the shield only has one 5V Vcc - Matt
 
 String dir = " ";
 int countRight = 0;
@@ -33,6 +34,7 @@ int encLeftValB = 0;
 double distanceBetweenWheels = 9.18; //inches
 double radius = 3; //in inches
 double wheelCircumference = radius * M_PI * 2; //1.44 ft
+double wheelToCenter = distanceBetweenWheels / 2; //4.59 inches
 
 // Motor pins
 int motorRightDirection = 7;
@@ -54,7 +56,7 @@ double errorRight = 0;
 double controllerOutputRight = 0;
 double derivativeRight = 0;
 double integralRight = 0;
-double oldErrorRight = 0;
+double oldErrorRight = 0; 
 double rightAngularSpeed = 0;
 
 // Right positions controller
@@ -180,7 +182,7 @@ void motorsIdle() {
 }
 
 
-void move(int distance, int forwardsOrDegrees) {
+void move(int distance, int typeOfMotion) {
   // Initialize the counts to zero before movements
   countRight = 0;
   countLeft = 0;
@@ -191,7 +193,7 @@ void move(int distance, int forwardsOrDegrees) {
 
   // TODO Add states for locating tags and for driving in a circle
   // Set counts and directions
-  switch (forwardsOrDegrees) {
+  switch (typeOfMotion) {
     case FORWARDS:
       motorsForwards();
       desiredCountsRight = feet2Counts(distance);
@@ -219,6 +221,14 @@ void move(int distance, int forwardsOrDegrees) {
         desiredCountsLeft *= -1;
       }
       break;
+    case CIRCLE: //Configured for a clockwise circle around beacon
+      motorsForwards();
+      //calculate the radius the LEFT wheel will trace
+      double leftWheelRadius = distance + wheelToCenter/12; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
+      desiredCountsLeft = radius2Counts(leftWheelRadius);
+      //calculate the radius the RIGHT wheel will trace
+      double rightWheelRadius = distance - wheelToCenter/12;
+      desiredCountsRight = radius2Counts(rightWheelRadius);
     default:
       motorsIdle();
       break;
@@ -298,14 +308,29 @@ void move(int distance, int forwardsOrDegrees) {
     controllerOutputLeft = abs(controllerOutputLeft);
     controllerOutputLeft = constrain(controllerOutputLeft, 0, 255);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if(typeOfMotion == CIRCLE){ //for movement that requires the wheels turn at different speeds
+      // If one motor has gone a greater percentage of its distance than the other, slow it down
+      if((abs(currentCountsRight/desiredCountsRight) - abs(currentCountsLeft/desiredCountsLeft)) > .03){
+        controllerOutputRight /= 3;
+      }
+      if((abs(currentCountsLeft/desiredCountsLeft) - abs(currentCountsRight/desiredCountsRight)) > .03){
+        controllerOutputLeft /= 3;
+      }      
+    }
 
-    // If one motor has gone farther than the other then slow it down until the motors are back in sync
-    if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 50) {
-      controllerOutputRight /= 3;
+    else{ //for movement that requires the wheels turn at the same rate
+      // If one motor has gone farther than the other then slow it down until the motors are back in sync
+      if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 50) {
+        controllerOutputRight /= 3;
+      }
+      else if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 50) {
+        controllerOutputLeft  /= 3;
+      }
+
     }
-    else if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 50) {
-      controllerOutputLeft  /= 3;
-    }
+
+
 
     // Send the commands to the motor
     analogWrite(motorRight, controllerOutputRight);
@@ -357,6 +382,11 @@ double degrees2Radians(double degree) {
   return phi;
 }
 
+// Convert circle radius to circumference and then to counts
+double radius2Counts(double radius){
+  double circumference = 2 * M_PI * radius;
+  return feet2Counts(circumference);
+}
 
 void encRightISR() {
   encRightValA = digitalRead(encRightA);
