@@ -9,6 +9,8 @@
 #define CIRCLE    2
 #define FORWARDS  1
 #define ROTATION  0
+#define RATIO_ACCELERATE 0.25
+#define MINIMUM_ACCEL 80
 #define SLAVE_ADDRESS 0x04
 
 // Encoder settings
@@ -35,7 +37,7 @@ int encLeftValB = 0;
 double distanceBetweenWheels = 9.18; //inches
 double radius = 3; //in inches
 double wheelCircumference = radius * M_PI * 2; //1.44 ft
-double wheelToCenter = distanceBetweenWheels / 2; //4.59 inches
+double wheelToCenter = (distanceBetweenWheels / 2) / 12; //0.3825 ft
 
 //Circle parameters
 double leftWheelRadius = 0;
@@ -62,7 +64,7 @@ double errorRight = 0;
 double controllerOutputRight = 0;
 double derivativeRight = 0;
 double integralRight = 0;
-double oldErrorRight = 0; 
+double oldErrorRight = 0;
 double rightAngularSpeed = 0;
 
 
@@ -90,8 +92,8 @@ void encRightISR();
 void encLeftISR();
 
 // Variables to control the speed of each wheel in counts per second
-double desiredRightAngularSpeed = CPR; // feet/s for 1V, used for experiments
-double desiredLeftAngularSpeed = CPR; // feet/s for 1V, used for experiments
+double desiredRightAngularSpeed = CPR * 1.75; // feet/s for 1V, used for experiments
+double desiredLeftAngularSpeed = CPR * 1.75; // feet/s for 1V, used for experiments
 
 double desiredRightAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
 double desiredLeftAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
@@ -108,9 +110,9 @@ int desiredAngle = 0;
 int tolerance = 5;
 
 void setup() {
-//  Wire.begin(SLAVE_ADDRESS);
-//  Wire.onReceive(receiveData);
-  
+  //  Wire.begin(SLAVE_ADDRESS);
+  //  Wire.onReceive(receiveData);
+
   Serial.begin(9600);
   pinMode(encRightA,  INPUT_PULLUP);
   pinMode(encLeftA,   INPUT_PULLUP);
@@ -131,13 +133,16 @@ void setup() {
   // Initialize the motors running forwards
   motorsIdle();
 
-  move(3, FORWARDS);
-  move(-135, ROTATION);
-  move (3, FORWARDS);
+  //  move(3, FORWARDS);
+  //  move(-135, ROTATION);
+  //  move (3, FORWARDS);
+  //  move(90, ROTATION);
+  //  move(3, FORWARDS);
+  //  move(-135, ROTATION);
+  //  move(3, FORWARDS);
+  move(1, FORWARDS);
   move(90, ROTATION);
-  move(3, FORWARDS);
-  move(-135, ROTATION);
-  move(3, FORWARDS);
+  move(.75, CIRCLE);
 }
 
 void loop() {
@@ -172,7 +177,7 @@ void motorsIdle() {
 }
 
 
-void move(int distance, int typeOfMotion) {
+void move(double distance, int typeOfMotion) {
   // Initialize the counts to zero before movements
   countRight = 0;
   countLeft = 0;
@@ -190,7 +195,7 @@ void move(int distance, int typeOfMotion) {
 
       localAngularSpeedRight = desiredRightAngularSpeed;
       localAngularSpeedLeft = desiredLeftAngularSpeed;
-      
+
       break;
     case ROTATION:
       desiredCountsRight = degrees2Counts(distance);
@@ -213,18 +218,22 @@ void move(int distance, int typeOfMotion) {
     case CIRCLE: //Configured for a clockwise circle around beacon
       motorsForwards();
       //calculate the radius the LEFT wheel will trace
-      leftWheelRadius = distance + wheelToCenter/12; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
+      leftWheelRadius = distance + wheelToCenter; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
+      //Serial.print(leftWheelRadius); Serial.print(" ");
       desiredCountsLeft = radius2Counts(leftWheelRadius);
-      
+
       //calculate the radius the RIGHT wheel will trace
-      rightWheelRadius = distance - wheelToCenter/12;
+      rightWheelRadius = distance - wheelToCenter;
+      //Serial.print(rightWheelRadius); Serial.print(" ");
       desiredCountsRight = radius2Counts(rightWheelRadius);
 
-      angularSpeedRatio = desiredCountsRight/desiredCountsLeft; //By using this ratio we can modify the voltage of the right wheel to be slower
+      angularSpeedRatio = (double)desiredCountsRight / desiredCountsLeft; //By using this ratio we can modify the voltage of the right wheel to be slower
 
       localAngularSpeedRight = desiredRightAngularSpeed * angularSpeedRatio;
       localAngularSpeedLeft = desiredLeftAngularSpeed;
-      
+    //Serial.print(feet2Counts(6.28)); Serial.print(" ");
+    //Serial.print(desiredCountsLeft); Serial.print(" ");Serial.print(desiredCountsRight); Serial.print(" ");Serial.println(angularSpeedRatio);
+
     default:
       motorsIdle();
       break;
@@ -279,27 +288,31 @@ void move(int distance, int typeOfMotion) {
     controllerOutputLeft = abs(controllerOutputLeft);
     controllerOutputLeft = constrain(controllerOutputLeft, 0, 255);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    if(typeOfMotion == CIRCLE){ //for movement that requires the wheels turn at different speeds
-      // If one motor has gone a greater percentage of its distance than the other, slow it down
-      if((abs(currentCountsRight/desiredCountsRight) - abs(currentCountsLeft/desiredCountsLeft)) > .03){
-        controllerOutputRight /= 3;
-      }
-      if((abs(currentCountsLeft/desiredCountsLeft) - abs(currentCountsRight/desiredCountsRight)) > .03){
-        controllerOutputLeft /= 3;
-      }      
+
+
+
+    /////////////////////////////////////////////// Acceleration Calcs //////////////////////////////////////////////////////////////////
+    double percentRight = abs((double)currentCountsRight / desiredCountsRight);
+    double percentLeft = abs((double)currentCountsLeft / desiredCountsLeft);
+    Serial.print(percentRight); Serial.print(" "); Serial.print(percentLeft); Serial.println(" ");
+
+
+    // If one motor has gone a greater percentage of its distance than the other, slow it down
+    if ((percentRight - percentLeft) > .03) {
+      controllerOutputRight /= 3;
+    }
+    if ((percentLeft - percentRight) > .03) {
+      controllerOutputLeft /= 3;
     }
 
-    else{ //for movement that requires the wheels turn at the same rate
-      // If one motor has gone farther than the other then slow it down until the motors are back in sync
-      if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 50) {
-        controllerOutputRight /= 3;
-      }
-      else if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 50) {
-        controllerOutputLeft  /= 3;
-      }
-
+    if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
+      localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed, 750, desiredRightAngularSpeed);
+      localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 750, desiredLeftAngularSpeed);
     }
+
+    /*if(percentLeft < RATIO_ACCELERATE){
+      localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE)*localAngularSpeedLeft, 1000, desiredLeftAngularSpeed);
+      }*/
 
 
 
@@ -354,7 +367,7 @@ double degrees2Radians(double degree) {
 }
 
 // Convert circle radius to circumference and then to counts
-double radius2Counts(double radius){
+double radius2Counts(double radius) {
   double circumference = 2 * M_PI * radius;
   return feet2Counts(circumference);
 }
