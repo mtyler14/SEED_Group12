@@ -69,7 +69,7 @@ double rightAngularSpeed = 0;
 
 
 /////////////////////////////////////////////////////////
-// Setting integral and derivative gains might reduce the need to slow one motor down if it gets ahead of the other <- That's a good point, I'll simulate this for a few conditions- Rachel
+// Setting integral and derivative gains might reduce the need to slow one motor down if it gets ahead of the other <- I'll simulate this for a few conditions- Rachel
 /////////////////////////////////////////////////////////
 
 // Left velocity PID controller
