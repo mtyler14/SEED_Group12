@@ -5,10 +5,11 @@
   To use this code, connect the GND, SCL, and SDA lines to the raspberry pi. Plug in the motor
   drive to the ardunino and connect the encoder to the pins specified in the code below.
 */
-
+#include <Wire.h>
 #define CIRCLE    2
 #define FORWARDS  1
 #define ROTATION  0
+#define SEARCH    3
 #define RATIO_ACCELERATE 0.25
 #define MINIMUM_ACCEL 80
 #define SLAVE_ADDRESS 0x04
@@ -67,6 +68,9 @@ double integralRight = 0;
 double oldErrorRight = 0;
 double rightAngularSpeed = 0;
 
+bool search = false;
+bool markerFound = false;
+
 
 /////////////////////////////////////////////////////////
 // Setting integral and derivative gains might reduce the need to slow one motor down if it gets ahead of the other <- I'll simulate this for a few conditions- Rachel
@@ -84,7 +88,7 @@ double integralLeft = 0;
 double oldErrorLeft = 0;
 double LeftAngularSpeed = 0;
 
-double loopSpeed = 50; // 50ms for 20Hz to prevent noise
+double loopSpeed = 3; // 50ms for 20Hz to prevent noise
 int delayValue = 0;
 
 // Interrupt routines for the encoders
@@ -98,20 +102,26 @@ double desiredLeftAngularSpeed = CPR * 1.75; // feet/s for 1V, used for experime
 double desiredRightAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
 double desiredLeftAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
 
+double desiredRightAngularSpeedSearch = CPR / 4;
+double desiredLeftAngularSpeedSearch = CPR / 4;
+
 
 
 // Variables to control the distance the robot moves
 int desiredCountsRight = 0;
 int desiredCountsLeft = 0;
-int desiredDistance = 0;
-int desiredAngle = 0;
+char receivedNumbers[32];
+int receiveIndex = 0;
+double desiredAngle = 0;
+double desiredDistance = 0;
+bool isNegativeAngle = false;
 
 // Encoder must read within this values of the desired counts to be considered position reached
 int tolerance = 5;
 
 void setup() {
-  //  Wire.begin(SLAVE_ADDRESS);
-  //  Wire.onReceive(receiveData);
+  Wire.begin(SLAVE_ADDRESS);
+  Wire.onReceive(receiveData);
 
   Serial.begin(9600);
   pinMode(encRightA,  INPUT_PULLUP);
@@ -140,9 +150,16 @@ void setup() {
   //  move(3, FORWARDS);
   //  move(-135, ROTATION);
   //  move(3, FORWARDS);
-  move(1, FORWARDS);
+  //move(1, FORWARDS);
+  //move(90, ROTATION);
+  move(360, SEARCH);
+  search = false;
+  move(desiredAngle, ROTATION);
+  move((double)((desiredDistance / 2.54 / 12) - 1.5), FORWARDS);
   move(90, ROTATION);
-  move(.75, CIRCLE);
+  move(1.5, CIRCLE);
+  markerFound = false;
+
 }
 
 void loop() {
@@ -173,7 +190,14 @@ void motorsClockwise() {
 void motorsIdle() {
   analogWrite(motorLeft, 0);
   analogWrite(motorRight, 0);
-  delay(750);
+  delay(500);
+}
+
+void motorsIdleAfterSearch() {
+  analogWrite(motorLeft, 0);
+  analogWrite(motorRight, 0);
+  markerFound = false;
+  delay(1000);
 }
 
 
@@ -197,12 +221,21 @@ void move(double distance, int typeOfMotion) {
       localAngularSpeedLeft = desiredLeftAngularSpeed;
 
       break;
+
+    case SEARCH:
+      search = true;
+      localAngularSpeedRight = desiredRightAngularSpeedSearch;
+      localAngularSpeedLeft = desiredLeftAngularSpeedSearch;
+
     case ROTATION:
       desiredCountsRight = degrees2Counts(distance);
       desiredCountsLeft = degrees2Counts(distance);
 
-      localAngularSpeedRight = desiredRightAngularSpeedLow;
-      localAngularSpeedLeft = desiredLeftAngularSpeedLow;
+      if (search == false) {
+        localAngularSpeedRight = desiredRightAngularSpeedLow;
+        localAngularSpeedLeft = desiredLeftAngularSpeedLow;
+      }
+
 
       if (distance > 0) {
         motorsClockwise();
@@ -234,6 +267,9 @@ void move(double distance, int typeOfMotion) {
     //Serial.print(feet2Counts(6.28)); Serial.print(" ");
     //Serial.print(desiredCountsLeft); Serial.print(" ");Serial.print(desiredCountsRight); Serial.print(" ");Serial.println(angularSpeedRatio);
 
+
+
+
     default:
       motorsIdle();
       break;
@@ -243,6 +279,11 @@ void move(double distance, int typeOfMotion) {
   // While the encoder counts are more than a certain amount from the target
   while (abs((abs(desiredCountsRight) - abs(countRight))) > tolerance || abs((abs(desiredCountsLeft) - abs(countLeft))) > tolerance) {
     currentTime = millis(); //collect time of program in milliseconds
+
+    if (search == true && markerFound == true) {
+      motorsIdleAfterSearch();
+      break;
+    }
 
     //    If both motors have gone too far then stop then exit the loop
     if (abs(countRight) > abs(desiredCountsRight) || abs(countLeft) > abs(desiredCountsLeft)) {
@@ -294,20 +335,32 @@ void move(double distance, int typeOfMotion) {
     /////////////////////////////////////////////// Acceleration Calcs //////////////////////////////////////////////////////////////////
     double percentRight = abs((double)currentCountsRight / desiredCountsRight);
     double percentLeft = abs((double)currentCountsLeft / desiredCountsLeft);
-    Serial.print(percentRight); Serial.print(" "); Serial.print(percentLeft); Serial.println(" ");
+    //Serial.print(percentRight); Serial.print(" "); Serial.print(percentLeft); Serial.println(" ");
 
 
     // If one motor has gone a greater percentage of its distance than the other, slow it down
     if ((percentRight - percentLeft) > .03) {
-      controllerOutputRight /= 3;
+      controllerOutputRight /= 2;
     }
     if ((percentLeft - percentRight) > .03) {
-      controllerOutputLeft /= 3;
+      controllerOutputLeft /= 2;
     }
 
-    if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
-      localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed, 750, desiredRightAngularSpeed);
-      localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 750, desiredLeftAngularSpeed);
+    if (typeOfMotion == FORWARDS) {
+      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
+        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed, 1000, desiredRightAngularSpeed);
+        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 1000, desiredLeftAngularSpeed);
+      }
+    } else if (typeOfMotion == ROTATION) {
+      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
+        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeedLow, 800, desiredRightAngularSpeedLow);
+        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeedLow, 800, desiredLeftAngularSpeedLow);
+      }
+    } else if (typeOfMotion == CIRCLE) {
+      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
+        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed * angularSpeedRatio, 1000 * angularSpeedRatio, desiredRightAngularSpeed * angularSpeedRatio);
+        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 1000, desiredLeftAngularSpeed);
+      }
     }
 
     /*if(percentLeft < RATIO_ACCELERATE){
@@ -328,7 +381,7 @@ void move(double distance, int typeOfMotion) {
     // Delay a certain amount to keep a constant loop speed
     endTime = millis();
     delayValue = loopSpeed - ((millis() - currentTime));
-
+    //Serial.println(delayValue);
     delay(delayValue); // delay accordingly for 50ms
   }
   Serial.println("The movement finished");
@@ -406,9 +459,65 @@ void encLeftISR() {
 
 
 // callback for received data. Receive data from the raspberry pi
-//void receiveData(int byteCount) {
-//  while (Wire.available()) {
-//    desiredAngle = Wire.read();
-//    desiredDistance = Wire.read();
-//  }
-//}
+void receiveData(int byteCount) {
+  receiveIndex = 0;
+  int receivedNum = 0;
+  Wire.read();
+  while (Wire.available()) {
+    receivedNum = Wire.read();
+    if (receivedNum == '-') {
+      isNegativeAngle = true;
+      continue;
+    }
+    receivedNumbers[receiveIndex] = receivedNum;
+    receiveIndex++;
+  }
+
+  if (markerFound == false) {
+
+    desiredDistance = 0;
+    desiredAngle = 0;
+
+    int powerIndex = 0;
+    int spaceIndex = 0;
+    int i = 0;
+
+    int decIndex = 0;
+    for (int j = 0; receivedNumbers[j] != ' '; j ++) {
+      if (receivedNumbers[j] == '.') decIndex = j;
+    }
+
+    for (i = 0; receivedNumbers[i] !=  ' '; i ++) {
+      if (i != decIndex) {
+        if (i < decIndex) powerIndex = i;
+        else powerIndex = i - 1;
+        desiredAngle += (pow(10, decIndex - powerIndex - 1)) * (int(receivedNumbers[i] - '0'));
+      }
+    }
+
+    if (isNegativeAngle == true) {
+      desiredAngle *= -1;
+      isNegativeAngle = false;
+    }
+
+    spaceIndex = i;
+
+    for (int j = spaceIndex; receivedNumbers[j] != '\0'; j ++) {
+      if (receivedNumbers[j] == '.') decIndex = j;
+    }
+
+    for (i = spaceIndex + 1; receivedNumbers[i] != '\0'; i ++) {
+      if (receivedNumbers[i] == '\0') break;
+      if (i != decIndex) {
+        if (i < decIndex) powerIndex = i - spaceIndex + 1;
+        else powerIndex = i - spaceIndex;
+
+        desiredDistance += (pow(10, decIndex - powerIndex - spaceIndex)) * (int(receivedNumbers[i] - '0'));
+      }
+    }
+  }
+
+  markerFound = true;
+
+  Serial.print(desiredDistance); Serial.print(" "); Serial.println(desiredAngle);
+}
