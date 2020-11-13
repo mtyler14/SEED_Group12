@@ -1,7 +1,7 @@
 
 
 /*
-  This code controls motor and spinning wheel. It takes inputs from an I2C bus and an encoder.
+  This code controls the motors and spinning wheels. It takes inputs from an I2C bus and an encoder.
   The programs outputs a PWM signal to a motor controller and sends the location of the
   wheel over I2C to a raspberry pi.
   To use this code, connect the GND, SCL, and SDA lines to the raspberry pi. Plug in the motor
@@ -73,11 +73,6 @@ double rightAngularSpeed = 0;
 bool search = false;
 bool markerFound = false;
 
-
-/////////////////////////////////////////////////////////
-// Setting integral and derivative gains might reduce the need to slow one motor down if it gets ahead of the other <- I'll simulate this for a few conditions- Rachel
-/////////////////////////////////////////////////////////
-
 // Left velocity PID controller
 double KpLeft = .08;
 double KiLeft = 0;
@@ -97,15 +92,15 @@ int delayValue = 0;
 void encRightISR();
 void encLeftISR();
 
-// Variables to control the speed of each wheel in counts per second
+// Variables to control the speed of each wheel for various cases
 double desiredRightAngularSpeed = CPR * 2.5; // counts per second
-double desiredLeftAngularSpeed = CPR * 2.5; // counts per second
+double desiredLeftAngularSpeed = CPR * 2.5; 
 
-double desiredRightAngularSpeedLow = CPR; // feet/s for 1V, used for experiments
-double desiredLeftAngularSpeedLow = CPR; // feet/s for 1V, used for experiments
+double desiredRightAngularSpeedLow = CPR; // counts per second
+double desiredLeftAngularSpeedLow = CPR; 
 
-double desiredRightAngularSpeedSearch = CPR / 3;
-double desiredLeftAngularSpeedSearch = CPR / 3;
+double desiredRightAngularSpeedSearch = CPR / 3; // counts per second
+double desiredLeftAngularSpeedSearch = CPR / 3; 
 
 
 
@@ -142,10 +137,9 @@ void setup() {
 
   digitalWrite(enc2Volt, HIGH);
   digitalWrite(motorEnable, HIGH);
+  
   // Initialize the motors running forwards
   motorsIdle();
-
-  //  move(5, FORWARDS);
 
   move(720, SEARCH);
   search = false;
@@ -204,15 +198,14 @@ void move(double distance, int typeOfMotion) {
   double localAngularSpeedRight = 0;
   double localAngularSpeedLeft = 0;
 
-  // TODO Add states for locating tags and for driving in a circle
-  // Set counts and directions
+  // Set counts and cases for motion
   switch (typeOfMotion) {
     case FORWARDS:
       motorsForwards();
       desiredCountsRight = feet2Counts(distance);
       desiredCountsLeft = feet2Counts(distance);
 
-      localAngularSpeedRight = desiredRightAngularSpeed;
+      localAngularSpeedRight = desiredRightAngularSpeed; // note the speeds chosen
       localAngularSpeedLeft = desiredLeftAngularSpeed;
 
       break;
@@ -231,7 +224,6 @@ void move(double distance, int typeOfMotion) {
         localAngularSpeedLeft = desiredLeftAngularSpeedLow;
       }
 
-
       if (distance > 0) {
         motorsClockwise();
         // Set the desired counts to be negative for the motor in reverse
@@ -247,20 +239,17 @@ void move(double distance, int typeOfMotion) {
       motorsForwards();
       //calculate the radius the LEFT wheel will trace
       leftWheelRadius = distance + wheelToCenter; //distance will be input as the radius of the circle the CENTER of the robot is tracing (in ft)
-      //Serial.print(leftWheelRadius); Serial.print(" ");
       desiredCountsLeft = radius2Counts(leftWheelRadius);
 
       //calculate the radius the RIGHT wheel will trace
       rightWheelRadius = distance - wheelToCenter;
-      //Serial.print(rightWheelRadius); Serial.print(" ");
+   
       desiredCountsRight = radius2Counts(rightWheelRadius);
 
       angularSpeedRatio = (double)desiredCountsRight / desiredCountsLeft; //By using this ratio we can modify the voltage of the right wheel to be slower
 
       localAngularSpeedRight = desiredRightAngularSpeed * angularSpeedRatio;
       localAngularSpeedLeft = desiredLeftAngularSpeed;
-      //Serial.print(feet2Counts(6.28)); Serial.print(" ");
-      //Serial.print(desiredCountsLeft); Serial.print(" ");Serial.print(desiredCountsRight); Serial.print(" ");Serial.println(angularSpeedRatio);
 
       break;
 
@@ -269,7 +258,6 @@ void move(double distance, int typeOfMotion) {
       break;
   }
 
-  // TODO: change this to work based on the difference in percentage of distance completed
   // While the encoder counts are more than a certain amount from the target
   while (abs((abs(desiredCountsRight) - abs(countRight))) > tolerance || abs((abs(desiredCountsLeft) - abs(countLeft))) > tolerance) {
     currentTime = millis(); //collect time of program in milliseconds
@@ -290,7 +278,6 @@ void move(double distance, int typeOfMotion) {
 
 
     //////////////////////////////////////////////// Right motor control calculations ///////////////////////////////////////////////////////
-    // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
     rightAngularSpeed = abs((currentCountsRight - countRightBeforeDelay) / ((double)(currentTime - endTime) / 1000));
     // Right motor error in angular speed
     errorRight = localAngularSpeedRight - rightAngularSpeed; // error
@@ -308,7 +295,6 @@ void move(double distance, int typeOfMotion) {
 
 
     //////////////////////////////////////////////// Left motor control calculations ///////////////////////////////////////////////////////
-    // I think this should use loopTime. The speed is measured as change in counts per change in time. The change in counts in measured every loopTime ms.
     LeftAngularSpeed = abs((currentCountsLeft - countLeftBeforeDelay) / ((double)(currentTime - endTime) / 1000));
     // Left motor error in angular speed
     errorLeft = localAngularSpeedLeft - LeftAngularSpeed; // error
@@ -371,7 +357,6 @@ void move(double distance, int typeOfMotion) {
     //        localAngularSpeedLeft = constrain((double)currentCountsLeft / thresh * desiredLeftAngularSpeed, CPR, desiredLeftAngularSpeed);
     //      }
     //    }
-
 
 
 
