@@ -84,7 +84,7 @@ double integralLeft = 0;
 double oldErrorLeft = 0;
 double LeftAngularSpeed = 0;
 
-double loopSpeed = 10; // 50ms for 20Hz to prevent noise
+double loopSpeed = 10; // 10ms sampling time
 int delayValue = 0;
 
 // Interrupt routines for the encoders
