@@ -1,6 +1,5 @@
-
-
 /*
+  Demo 2 - Group 12
   This code controls the motors and spinning wheels. It takes inputs from an I2C bus and an encoder.
   The programs outputs a PWM signal to a motor controller and sends the location of the
   wheel over I2C to a raspberry pi.
@@ -22,7 +21,7 @@ const int encRightA = 2;
 const int encRightB = 5;
 const int encLeftA = 3;
 const int encLeftB = 6;
-const int enc2Volt = 11;  //What is this? <- applies a +5V to one of the encoders, since the shield only has one 5V Vcc - Matt
+const int enc2Volt = 11;  // applies a +5V to one of the encoders
 
 String dir = " ";
 int countRight = 0;
