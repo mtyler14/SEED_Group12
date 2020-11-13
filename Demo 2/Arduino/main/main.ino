@@ -1,3 +1,5 @@
+
+
 /*
   This code controls motor and spinning wheel. It takes inputs from an I2C bus and an encoder.
   The programs outputs a PWM signal to a motor controller and sends the location of the
@@ -57,7 +59,7 @@ long endTime = -1;
 long currentTime = 0;
 
 // Right velocity PID controller
-double KpRight = .1;
+double KpRight = .08;
 double KiRight = 0;
 double KdRight = 0;
 
@@ -77,7 +79,7 @@ bool markerFound = false;
 /////////////////////////////////////////////////////////
 
 // Left velocity PID controller
-double KpLeft = .1;
+double KpLeft = .08;
 double KiLeft = 0;
 double KdLeft = 0;
 
@@ -88,7 +90,7 @@ double integralLeft = 0;
 double oldErrorLeft = 0;
 double LeftAngularSpeed = 0;
 
-double loopSpeed = 3; // 50ms for 20Hz to prevent noise
+double loopSpeed = 10; // 50ms for 20Hz to prevent noise
 int delayValue = 0;
 
 // Interrupt routines for the encoders
@@ -96,14 +98,14 @@ void encRightISR();
 void encLeftISR();
 
 // Variables to control the speed of each wheel in counts per second
-double desiredRightAngularSpeed = CPR * 1.75; // feet/s for 1V, used for experiments
-double desiredLeftAngularSpeed = CPR * 1.75; // feet/s for 1V, used for experiments
+double desiredRightAngularSpeed = CPR * 2.5; // counts per second
+double desiredLeftAngularSpeed = CPR * 2.5; // counts per second
 
-double desiredRightAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
-double desiredLeftAngularSpeedLow = CPR / 2; // feet/s for 1V, used for experiments
+double desiredRightAngularSpeedLow = CPR; // feet/s for 1V, used for experiments
+double desiredLeftAngularSpeedLow = CPR; // feet/s for 1V, used for experiments
 
-double desiredRightAngularSpeedSearch = CPR / 4;
-double desiredLeftAngularSpeedSearch = CPR / 4;
+double desiredRightAngularSpeedSearch = CPR / 3;
+double desiredLeftAngularSpeedSearch = CPR / 3;
 
 
 
@@ -143,21 +145,14 @@ void setup() {
   // Initialize the motors running forwards
   motorsIdle();
 
-  //  move(3, FORWARDS);
-  //  move(-135, ROTATION);
-  //  move (3, FORWARDS);
-  //  move(90, ROTATION);
-  //  move(3, FORWARDS);
-  //  move(-135, ROTATION);
-  //  move(3, FORWARDS);
-  //move(1, FORWARDS);
-  //move(90, ROTATION);
-  move(360, SEARCH);
+  //  move(5, FORWARDS);
+
+  move(720, SEARCH);
   search = false;
   move(desiredAngle, ROTATION);
-  move((double)((desiredDistance / 2.54 / 12) - 1.5), FORWARDS);
+  move((double)((desiredDistance / 2.54 / 12) - .75), FORWARDS);
   move(90, ROTATION);
-  move(1.5, CIRCLE);
+  move(0.75, CIRCLE);
   markerFound = false;
 
 }
@@ -264,11 +259,10 @@ void move(double distance, int typeOfMotion) {
 
       localAngularSpeedRight = desiredRightAngularSpeed * angularSpeedRatio;
       localAngularSpeedLeft = desiredLeftAngularSpeed;
-    //Serial.print(feet2Counts(6.28)); Serial.print(" ");
-    //Serial.print(desiredCountsLeft); Serial.print(" ");Serial.print(desiredCountsRight); Serial.print(" ");Serial.println(angularSpeedRatio);
+      //Serial.print(feet2Counts(6.28)); Serial.print(" ");
+      //Serial.print(desiredCountsLeft); Serial.print(" ");Serial.print(desiredCountsRight); Serial.print(" ");Serial.println(angularSpeedRatio);
 
-
-
+      break;
 
     default:
       motorsIdle();
@@ -339,33 +333,45 @@ void move(double distance, int typeOfMotion) {
 
 
     // If one motor has gone a greater percentage of its distance than the other, slow it down
-    if ((percentRight - percentLeft) > .03) {
-      controllerOutputRight /= 2;
-    }
-    if ((percentLeft - percentRight) > .03) {
-      controllerOutputLeft /= 2;
-    }
-
-    if (typeOfMotion == FORWARDS) {
-      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
-        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed, 1000, desiredRightAngularSpeed);
-        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 1000, desiredLeftAngularSpeed);
+    if (markerFound == true && typeOfMotion == FORWARDS) {
+      if (desiredAngle > 0.1) {
+        localAngularSpeedLeft = desiredLeftAngularSpeed * (1 - desiredAngle * .02);
+        localAngularSpeedRight = desiredRightAngularSpeed;
+      } else if (desiredAngle < -0.1) {
+        localAngularSpeedRight = desiredRightAngularSpeed * (1 - desiredAngle * .02);
+        localAngularSpeedLeft = desiredLeftAngularSpeed;
       }
-    } else if (typeOfMotion == ROTATION) {
-      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
-        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeedLow, 800, desiredRightAngularSpeedLow);
-        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeedLow, 800, desiredLeftAngularSpeedLow);
-      }
+      desiredAngle = 0;
+      markerFound = false;
     } else if (typeOfMotion == CIRCLE) {
-      if (percentRight < RATIO_ACCELERATE && percentLeft < RATIO_ACCELERATE) {
-        localAngularSpeedRight = constrain((percentRight / RATIO_ACCELERATE) * desiredRightAngularSpeed * angularSpeedRatio, 1000 * angularSpeedRatio, desiredRightAngularSpeed * angularSpeedRatio);
-        localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE) * desiredLeftAngularSpeed, 1000, desiredLeftAngularSpeed);
+      if ((abs(currentCountsRight) - abs(currentCountsLeft * angularSpeedRatio)) > 10) {
+        controllerOutputRight /= 3;
+      }
+      else if ((abs(currentCountsLeft * angularSpeedRatio) - abs(currentCountsRight)) > 10) {
+        controllerOutputLeft  /= 3;
+      }
+    } else {
+      if ((abs(currentCountsRight) - abs(currentCountsLeft)) > 10) {
+        controllerOutputRight /= 3;
+      }
+      else if ((abs(currentCountsLeft) - abs(currentCountsRight)) > 10) {
+        controllerOutputLeft  /= 3;
       }
     }
+    //    double thresh = CPR / 2;
+    //    if (typeOfMotion == FORWARDS) {
+    //      if (currentCountsLeft < thresh && currentCountsRight < thresh) {
+    //        localAngularSpeedRight = constrain((double)currentCountsRight / thresh * desiredRightAngularSpeed, 1500, desiredRightAngularSpeed);
+    //        localAngularSpeedLeft = constrain((double)currentCountsLeft / thresh * desiredLeftAngularSpeed, 1500, desiredLeftAngularSpeed);
+    //      }
+    //    }
+    //    else if (typeOfMotion == CIRCLE) {
+    //      if (currentCountsLeft < thresh && currentCountsRight < thresh * angularSpeedRatio) {
+    //        localAngularSpeedRight = constrain((double)currentCountsRight / thresh * desiredRightAngularSpeed * angularSpeedRatio, CPR * angularSpeedRatio, desiredRightAngularSpeed * angularSpeedRatio);
+    //        localAngularSpeedLeft = constrain((double)currentCountsLeft / thresh * desiredLeftAngularSpeed, CPR, desiredLeftAngularSpeed);
+    //      }
+    //    }
 
-    /*if(percentLeft < RATIO_ACCELERATE){
-      localAngularSpeedLeft = constrain((percentLeft / RATIO_ACCELERATE)*localAngularSpeedLeft, 1000, desiredLeftAngularSpeed);
-      }*/
 
 
 
@@ -516,6 +522,7 @@ void receiveData(int byteCount) {
       }
     }
   }
+  desiredAngle -= 4.5;
 
   markerFound = true;
 
