@@ -12,9 +12,12 @@ The objective of Demo 2 is to integrate Derrick's forward and rotational motion 
 ## Computer Vision
 The computer vision portion of this project is very similar to the computer vision code used in [Demo 1](https://github.com/mtyler14/SEED_Group12/tree/master/Demo%201). 
 The code works by using OpenCV to detect ArUco markers. The 3D pose of the marker is determined and the angle and distance from the camera is calculated. The angle is found with
-the inverse tangent of the z position divided by the x position. The distance is found by calculating the magnitude of the z and x positions. Once the angle and distance have been calculated, they are send over I2C to the Arduino. The Arduino does not send any information back to the computer vision program.
+the inverse tangent of the z position divided by the x position. The distance is found by calculating the magnitude of the z and x positions. Once the angle and distance have
+been calculated, they are send over I2C to the Arduino. The Arduino does not send any information back to the computer vision program.
+
 The Raspberry Pi is not a fast computer, and takes about a second to detect a tag in a frame. It might be possible to optimize this code to get faster detection, but for 
-now this performance is satifactory. This Pi continually looks for tags in frames from the camera. If it detectes a tag, it performs the angle and distance calculations. If the angle and distance are not the same as the last detected tags's it sends the information to the Arduino.
+now this performance is satifactory. This Pi continually looks for tags in frames from the camera. If it detectes a tag, it performs the angle and distance calculations. If theangle and distance are not the same as the last detected tags's it sends the information to the Arduino.
+
 During the detection process the softawre takes into account the lense distortion of the camera. This is done by applying a set of distortion coefficients to the tag pose
 detection. These coefficients were calculated in a calibration program and are unique to the camera used on this robot. Without the distortion coefficents, tags at the edge of
 the camera's field of view would be warped, and the software would return innacurate angle and distance values.
