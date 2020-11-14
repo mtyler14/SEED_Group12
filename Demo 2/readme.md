@@ -10,6 +10,7 @@ The objective of Demo 2 is to integrate Derrick's forward and rotational motion 
 
 
 ## Computer Vision
+The computer vision portion of this project is very similar to the computer vision code used in (Demo 1 https://github.com/mtyler14/SEED_Group12/tree/master/Demo%201). 
 
 
 ## Matlab
