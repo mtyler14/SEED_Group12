@@ -39,11 +39,11 @@ To further simulate the controllers for Demo 2, each controller's reference resp
 
 ![Motor1 controller fast](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_control.jpg)
 
-Figure #: The proportional controller for motor 1 with a faster speed.
+Figure #: The proportional controller for reference versus faster speed for motor 1.
 
 ![Motor2 controller fast](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_control.jpg)
 
-Figure #: The proportional controller for motor 2 with a faster speed.
+Figure #: The proportional controller for reference versus faster speed for motor 2.
 
 ![Motor1 velocity](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_veloc.jpg)
 
