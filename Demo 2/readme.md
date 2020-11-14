@@ -1,4 +1,4 @@
-Note: Derrick is our robot's name.
+Figure #: Derrick, the robot.
 
 # Demo 2
 The objective of Demo 2 is to integrate Derrick's forward and rotational motion into a more complex goal of circling a beacon. Derrick must search and detect the beacon, drive towards it, stop within 1 foot, and drive in a circle around the beacon. He must drive within 2 feet away from the beacon at any time. He must stop within 3 inches of the starting point of the circle. The average time to complete these tasks is of great importance, in addition to reasonable accuracy and success.
