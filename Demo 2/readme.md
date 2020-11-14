@@ -59,7 +59,7 @@ Figure #: The angular velocities for reference versus faster speed for motor 1.
 
 Figure #: The angular velocities for reference versus faster speed for motor 2.
 
-Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.6 rad/s for the reference. This is expected, since the controllers do not directly utilize additional gains to correct the speed and position. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
+Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.6 rad/s reference, as expected. Thus, to reasonably reach a position of 5 feet in 10 seconds, each wheel moves approximately 12 radians in 10 seconds.
 
 ![Motor1 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_pos_speed.jpg)
 
@@ -68,5 +68,9 @@ Figure #: The angular position for reference versus faster speed for motor 1.
 ![Motor2 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_pos_speed.jpg)
 
 Figure #: The angular position for reference versus faster speed for motor 2.
+
+However, if one of the wheels accelerates faster than the other, this disturbance results in considerable overshoot. Figure # shows the Simulink block diagram to simulate this disturbance. A step response 1.5 faster than the reference is introduced into the system for motor 1. Figure # shows controller's lack of disturbance rejection, as no Ki or Kd gains are used for this system. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
+
+
 
 Hence, the control system is based on the encoder counts and angular velocity of each motor and the resulting position. The target objectives are successfully met with the necessary corrections to the speed based on the comparison of the motors' responses.
