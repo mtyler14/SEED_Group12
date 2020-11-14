@@ -69,7 +69,7 @@ Figure #: The angular position for reference versus faster speed for motor 1.
 
 Figure #: The angular position for reference versus faster speed for motor 2.
 
-However, if one of the wheels accelerates faster than the other, this disturbance results in considerable overshoot. Figure # shows the Simulink block diagram to simulate this disturbance. A step response 1.5 faster than the reference is introduced into the system for motor 1. Figure # shows controller's lack of disturbance rejection, as no Ki or Kd gains are used for this system. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
+However, if one of the wheels accelerates faster than the other, this disturbance results in considerable overshoot. Figure # shows the Simulink block diagram to simulate this disturbance. A step response 1.5 times faster than the reference is introduced into the system for motor 1. Figure # shows controller's lack of disturbance rejection, as no Ki or Kd gains are used for this system. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
 
 
 
