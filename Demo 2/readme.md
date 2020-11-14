@@ -53,7 +53,7 @@ Figure #: The angular velocities for reference versus faster speed for motor 1.
 
 Figure #: The angular velocities for reference versus faster speed for motor 2.
 
-Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. Unlike the velocities, the angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.4 rad/s for the reference. This is expected, since the controllers do not directly utilize additional gains to correct the speed and position. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
+Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.4 rad/s for the reference. This is expected, since the controllers do not directly utilize additional gains to correct the speed and position. This response is corrected with the Arduino code for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
 
 ![Motor1 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_pos_speed.jpg)
 
