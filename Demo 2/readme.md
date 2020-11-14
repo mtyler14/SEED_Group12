@@ -73,15 +73,14 @@ However, if one of the wheels accelerates faster than the other, this disturbanc
 
 ![Motor1 disturb](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb.JPG)
 
-Figure #: The P controller response to a disturbance of sudden acceleration for motor 1.
+Figure #: The P controller response to a disturbance of acceleration for motor 1.
 
 ![Motor1 block disturb](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb_block.JPG)
 
-Figure #: The block diagram with a PI controller for the input disturbance.
+Figure #: The block diagram with a PI controller for an input disturbance for motor 1.
 
 ![Motor1 disturb reject](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb_reject.JPG)
 
-Figure #: The PI controller response showing disturbance rejection.
-
+Figure #: The PI controller response showing disturbance rejection for motor 1.
 
 Hence, the control system is based on the encoder counts and angular velocity of each motor and the resulting position. The target objectives are successfully met with the necessary corrections to the speed based on the comparison of the motors' responses.
