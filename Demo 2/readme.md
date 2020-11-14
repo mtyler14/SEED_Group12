@@ -1,5 +1,6 @@
 
 ![Robot](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/derrick.JPG)
+
 Figure #: Derrick, the robot.
 
 # Demo 2
