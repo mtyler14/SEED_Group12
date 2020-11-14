@@ -45,31 +45,31 @@ Using this block diagram, the controllers are simulated for the faster speed. Fi
 
 ![Motor1 controller fast](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_control.jpg)
 
-Figure #: The proportional controller for reference versus faster speed for motor 1.
+Figure #: The P controller for faster speed for motor 1.
 
 ![Motor2 controller fast](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_control.jpg)
 
-Figure #: The proportional controller for reference versus faster speed for motor 2.
+Figure #: The P controller for faster speed for motor 2.
 
 ![Motor1 velocity](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_veloc.jpg)
 
-Figure #: The angular velocities for reference versus faster speed for motor 1.
+Figure #: The angular velocity for reference versus faster speed for motor 1.
 
 ![Motor2 velocity](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_veloc.jpg)
 
-Figure #: The angular velocities for reference versus faster speed for motor 2.
+Figure #: The angular velocity for faster speed for motor 2.
 
 Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.6 rad/s reference, as expected. Thus, to reasonably reach a position of 5 feet in 10 seconds, each wheel moves approximately 12 radians in 10 seconds. If the motors respond exacty the same, then Derrick can reach his destination with a faster speed and stable output.
 
 ![Motor1 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_pos_speed.jpg)
 
-Figure #: The angular position for reference versus faster speed for motor 1.
+Figure #: The angular position for faster speed for motor 1.
 
 ![Motor2 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_pos_speed.jpg)
 
-Figure #: The angular position for reference versus faster speed for motor 2.
+Figure #: The angular position for faster speed for motor 2.
 
-However, if one of the wheels accelerates faster than the other, this disturbance results in considerable overshoot. A step response 1.5 times faster than the reference is introduced into the system as a disturbance for motor 1. Figure # shows controller's lack of disturbance rejection, as no Ki or Kd gains are used for this system. Thus, to simulate the response, Ki gain is introduced and a PI controller is used for comparison. Figure # shows the Simulink block diagram with the disturbance and PI controller. The Ki gain is 17.4 V/(rad), and the Kp gain is tuned to 1.58 V/(rad/s). Figure # shows the system's ability to reject the disturbance given this Kp and Ki gain. Though this works for the simulation, a Ki gain of 17.4 is not realistic for implementation. For the Arduino code, this unexpected acceleration of one of the motors is instead corrected for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3. 
+However, if one of the wheels accelerates faster than the other, this disturbance results in considerable overshoot. A step response 1.5 times faster than the reference is introduced into the system as a disturbance for motor 1. Figure # shows controller's lack of disturbance rejection, as no Ki or Kd gains are used for this system. Thus, to simulate the response, Ki gain is introduced and a PI controller is used for comparison. Figure # shows the Simulink block diagram with the disturbance and PI controller. The Ki gain is 17.4 V/(rad), and the Kp gain is tuned to 1.58 V/(rad/s). Figure # shows the system's ability to reject the disturbance given this Kp and Ki gain. 
 
 ![Motor1 disturb](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb.JPG)
 
@@ -83,4 +83,6 @@ Figure #: The block diagram with a PI controller for an input disturbance for mo
 
 Figure #: The PI controller response showing disturbance rejection for motor 1.
 
-Hence, the control system is based on the encoder counts and angular velocity of each motor and the resulting position. The target objectives are successfully met with the necessary corrections to the speed based on the comparison of the motors' responses.
+Though this works for the simulation, a Ki gain of 17.4 is not realistic for implementation. For the Arduino code, this unexpected acceleration of one of the motors is instead corrected for each mode of Derrick's motion. For example, if Derrick circles the beacon and the difference in the motors' speeds (in terms of counts) exceed 10, the controller outputs are scaled by 3.
+
+Hence, the control system is tuned based on the encoder counts and angular velocity for each motor. The target position is reached with a final speed of 2.5 times the reference with minimal overshoot. The target objectives are successfully met with the necessary corrections to the speed based on the comparison of the motors' responses.
