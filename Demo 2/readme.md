@@ -15,7 +15,13 @@ The objective of Demo 2 is to integrate Derrick's forward and rotational motion 
 ## Matlab
 The control system for Demo 2 utilizes the proportional angular velocity controllers for each motor from Demo 1. The proportional gains used for each controller are slightly reduced to 1.196 V/(rad/s), or 0.08 PWM/(counts/s) as used in Arduino. No integral or derivative gains are added. Figure # shows the unit step response for motor 1, and Figure # shows the unit step response for motor 2. Note that the simulated transfer function is tuned to approximately match the experimental data based on the identification experiments from Demo 1. The unit step responses are assumed to correlate with 0.5 V delivered to each motor.
 
+![Motor1 tf](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_tf.jpg)
 
+Figure #: The step response for Motor 1.
+
+![Motor2 tf](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_tf.jpg)
+
+Figure #: The step response for Motor 2.
 
 Instead of adding Ki and Kp gains, the speed of the motors are corrected using Arduino. If the encoder counts (distance) of one motor exceed the other by the set thresholds, then the motor is slowed down.
 
