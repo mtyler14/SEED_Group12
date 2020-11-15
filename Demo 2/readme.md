@@ -52,7 +52,7 @@ To further simulate the controllers for Demo 2, each controller's reference resp
 
 Figure #: The controller block diagram for motor 1 with a faster speed at the reference input.
 
-Using this block diagram, the controllers are simulated for the faster speed. Figure # shows the controller output with a faster speed for motor 1. Figure # shows the controller output for motor 2. Figure # shows the angular velocities for motor 1. Figure # shows the angular velocities for motor 2. As expected, the results are still reasonably stable and the rise time for each motor is under 0.3 seconds. 
+Using this block diagram, the controllers are simulated for the faster speed. Figure # shows the controller output with a faster speed for motor 1. Figure # shows the controller output for motor 2. Figure # shows the angular velocities for motor 1. Figure # shows the angular velocities for motor 2. As expected, the results are still reasonably stable and the rise time for each motor is under 0.2 seconds. 
 
 ![Motor1 controller fast](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_control.jpg)
 
