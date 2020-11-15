@@ -7,7 +7,9 @@ Figure #: Derrick, the robot.
 The objective of Demo 2 is to integrate Derrick's forward and rotational motion into a more complex goal of circling a beacon. Derrick must search and detect the beacon, drive towards it, stop within 1 foot, and drive in a circle around the beacon. He must drive within 2 feet away from the beacon at any time. He must stop within 3 inches of the starting point of the circle. The average time to complete these tasks is of great importance, in addition to reasonable accuracy and success.
 
 ## Arduino
+The Arduino code utilizes the same code used in [Demo 1](https://github.com/mtyler14/SEED_Group12/tree/master/Demo%201) for forwards and rotational motion. The code utilizes a velocity controller for each wheel to ensure slight differences in the encoder outputs due to random mechanical motor difference will not cause drift when driving. If one of the wheels notice a difference in encoder counts when compared to the other one, the wheel that is slightly ahead will slow down until the difference in counts have been properly reset. Demo 2 expands the capabillity of the robot to include tag searching functionality, circular forwards motions to circle around the tag, and use of the Wire library to read the desired angle and desired distance sent through I2C by the Pi. 
 
+The receiveData callback reads the angle and distance sent as a string from the Pi, and converts them do doubles to be used by the movement functions. This is accomplished by sending the angle and distance seperated by a space, and terminated by a null character. The callback function 
 
 ## Computer Vision
 The computer vision portion of this project is very similar to the computer vision code used in [Demo 1](https://github.com/mtyler14/SEED_Group12/tree/master/Demo%201). 
@@ -16,9 +18,9 @@ the inverse tangent of the z position divided by the x position. The distance is
 been calculated, they are send over I2C to the Arduino. The Arduino does not send any information back to the computer vision program.
 
 The Raspberry Pi is not a fast computer, and takes about a second to detect a tag in a frame. It might be possible to optimize this code to get faster detection, but for 
-now this performance is satifactory. This Pi continually looks for tags in frames from the camera. If it detectes a tag, it performs the angle and distance calculations. If theangle and distance are not the same as the last detected tags's it sends the information to the Arduino.
+now this performance is satifactory. This Pi continually looks for tags in frames from the camera. If it detectes a tag, it performs the angle and distance calculations. If the angle and distance are not the same as the last detected tags's it sends the information to the Arduino.
 
-During the detection process the softawre takes into account the lense distortion of the camera. This is done by applying a set of distortion coefficients to the tag pose
+During the detection process the software takes into account the lense distortion of the camera. This is done by applying a set of distortion coefficients to the tag pose
 detection. These coefficients were calculated in a calibration program and are unique to the camera used on this robot. Without the distortion coefficents, tags at the edge of
 the camera's field of view would be warped, and the software would return innacurate angle and distance values.
 
