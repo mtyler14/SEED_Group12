@@ -92,7 +92,7 @@ However, if one of the wheels accelerates faster than the other, this disturbanc
 
 Figure #: The P controller response to a disturbance of acceleration for motor 1.
 
-![Motor1 block disturb](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb_block.JPG)
+![Motor1 block disturb](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_disturb_final.JPG)
 
 Figure #: The block diagram with a PI controller for an input disturbance for motor 1.
 
