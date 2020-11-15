@@ -46,7 +46,7 @@ Figure #: The angular position for motor 2.
 
 Instead of adding Ki and Kp gains, the speed of the motors are corrected using Arduino. If the encoder counts (distance) of one motor exceed the other by the set thresholds, then the motor is slowed down.
 
-To further simulate the controllers for Demo 2, each controller's reference response is compared to a faster response (faster speed) to ensure stability. Since the average time is a primary objective, the controllers are compared using a speed about twice as fast as is delivered to both motors. Since Derrick's target speed is approximately 5 feet in 10 seconds to approach the beacon, this speed is translated into a reasonable speed of approximately 1.2 rad/s for each motor. The angular velocities and position are compared for each motor. Figure # shows the Simulink block diagram for the faster speed to motor 1. A step response with twice the gain is added 10ms, or 1 sampling time duration, after the reference step response to account for the faster speed. The same procedure is used for motor 2.
+To further simulate the controllers for Demo 2, each controller's reference response is compared to a faster response (faster speed) to ensure stability. Since the average time is a primary objective, the controllers are compared using a speed about twice as fast as is delivered to both motors. Since Derrick's target speed is approximately 5 feet in 10 seconds to approach the beacon, this speed is translated into a reasonable speed of approximately 2 rad/s for each motor. The angular velocities and position are compared for each motor. Figure # shows the Simulink block diagram for the faster speed to motor 1. A step response with twice the gain is added 10ms, or 1 sampling time duration, after the reference step response to account for the faster speed. The same procedure is used for motor 2.
 
 ![Motor1 block](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_block_speed.JPG)
 
@@ -70,13 +70,13 @@ Figure #: The angular velocity for reference versus faster speed for motor 1.
 
 Figure #: The angular velocity for faster speed for motor 2.
 
-Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 1.2 rad/s versus 0.6 rad/s reference, as expected. Thus, to reasonably reach a position of 5 feet in 10 seconds, each wheel moves approximately 12 radians in 10 seconds. If the motors respond exacty the same, then Derrick can reach his destination with a faster speed and stable output.
+Figure # shows the angular positions for motor 1. Figure # shows the angular positions for motor 2. The angular position diverges considerably as shown for each motor with a speed of 2 rad/s versus 0.6 rad/s reference, as expected. Thus, to reasonably reach a position of 5 feet in 10 seconds, each wheel moves approximately 20 radians in 10 seconds. If the motors respond exacty the same, then Derrick can reach his destination with a faster speed and stable output.
 
-![Motor1 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_pos_speed.jpg)
+![Motor1 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor1_speed_pos.jpg)
 
 Figure #: The angular position for faster speed for motor 1.
 
-![Motor2 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_pos_speed.jpg)
+![Motor2 position speed](https://github.com/mtyler14/SEED_Group12/blob/master/Demo%202/images/motor2_speed_pos.jpg)
 
 Figure #: The angular position for faster speed for motor 2.
 
